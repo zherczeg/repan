@@ -1,0 +1,58 @@
+# Test recursions
+
+/(a)(?-1)(?+1)(?1)(b)/
+    print
+
+/a(?R)(?000000)b/
+    print
+
+/(?&abc)(?<abc>a)/
+    print
+
+/(?<Aa_9>a)(?&Aa_9)/
+    print
+
+/(?P<Zz_0>a)(?P>Zz_0)/
+    print
+
+/(?P<name>AA)(?P>name)/
+    print
+
+/a(?RR)b/
+    print
+
+/a(?-0)b/
+    print
+
+/a(?-1)b/
+    print
+
+/a(?0000b/
+    print
+
+/(?&0)/
+    print
+
+/(?P>0)/
+    print
+
+/(?&abc)/
+    print
+
+/(?&abc)\x{}/
+    print
+
+/(?P>name2)/
+    print
+
+/(a)\g'-1'\g<1>/
+    print
+
+/(?<ab>a)\g<ab>\g'ab'/
+    print
+
+/\g<ab/
+    print
+
+/\g''/
+    print

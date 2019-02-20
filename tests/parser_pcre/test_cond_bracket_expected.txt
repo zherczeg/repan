@@ -1,0 +1,135 @@
+# Testing conditional brackets
+
+# Testing capturing brackets
+
+/(?(0)abc)/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?[ HERE ]>>(0)abc)/
+
+/(?(1)abc)()/
+    print
+    /(?(1)abc)()/
+
+/(?(1)abc)/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?[ HERE ]>>(1)abc)/
+
+/()()(?(-2)abc)/
+    print
+    /()()(?(1)abc)/
+
+/()(?(-2)abc)/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /()(?[ HERE ]>>(-2)abc)/
+
+/(?(+2)abc)()()/
+    print
+    /(?(2)abc)()()/
+
+/(?(+2)abc)()/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?[ HERE ]>>(+2)abc)()/
+
+/(?(<name>)abc)(?<name>)/
+    print
+    /(?(<name>)abc)(?<name>)/
+
+/(?('name')abc)(?<name>)/
+    print
+    /(?(<name>)abc)(?<name>)/
+
+/(?('name')abc)/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?[ HERE ]>>('name')abc)/
+
+/(?('name)abc)/
+    print
+    Pattern parse failed: An apostrophe (') is expected
+        /(?('name[ HERE ]>>)abc)/
+
+/(?(<name)abc)/
+    print
+    Pattern parse failed: A greater than sign (>) is expected
+        /(?(<name[ HERE ]>>)abc)/
+
+/(?('name'abc)/
+    print
+    Pattern parse failed: A right bracket is expected
+        /(?('name'[ HERE ]>>abc)/
+
+# Testing recursion
+
+/(?(R00000)ab)(?(R)cd)/
+    print
+    /(?(R)ab)(?(R)cd)/
+
+/(?(R+1)abcd)()/
+    print
+    /(?(R1)abcd)()/
+
+/()()(?(R+0002)abcd)()()/
+    print
+    /()()(?(R4)abcd)()()/
+
+/(?(R+000)abcd)/
+    print
+    Pattern parse failed: Decimal zero with sign (+0 or -0) is not allowed
+        /(?[ HERE ]>>(R+000)abcd)/
+
+/(?(R&name)abcd)()(?<name>)/
+    print
+    /(?(R&name)abcd)()(?<name>)/
+
+/(?(R&name)abcd)()()/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?[ HERE ]>>(R&name)abcd)()()/
+
+# Testing conditional assertions
+
+/(?(?=a)b)/
+    print
+    /(?(?=a)b)/
+
+/(?(?!a)b|c)/
+    print
+    /(?(?!a)b|c)/
+
+/(?(?<=a)(b|c|d|e)|(f|g|h|i))/
+    print
+    /(?(?<=a)(b|c|d|e)|(f|g|h|i))/
+
+/(?(?<=a)b|c|d)/
+    print
+    Pattern parse failed: No more than two alternatives are allowed for a conditional block
+        /(?(?<=a)b|c[ HERE ]>>|d)/
+
+/(?(?:a)b|c)/
+    print
+    Pattern parse failed: Invalid lookahead/lookbehind assertion in a conditional block
+        /(?[ HERE ]>>(?:a)b|c)/
+
+/(?(?=a).(?=c)?.)/
+    print
+    /(?(?=a).(?=c)?.)/
+
+/(?(?=a)?.(?=c)?.)/
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /(?(?=a)[ HERE ]>>?.(?=c)?.)/
+
+# Testing define blocks
+
+/(?(DEFINE)(a|b|c)(d|e|f))/
+    print
+    /(?(DEFINE)(a|b|c)(d|e|f))/
+
+/(?(DEFINE)abc|def/
+    print
+    Pattern parse failed: Alternatives are not allowed for a define block
+        /(?(DEFINE)abc[ HERE ]>>|def/

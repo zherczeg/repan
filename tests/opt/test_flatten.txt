@@ -1,0 +1,19 @@
+# Test flatten optimization
+
+/a(?:(?:(?:)))b/
+    flatten, print
+
+/a(?:(?:(?:b|c)))d/
+    flatten, print
+
+/a(?:(?:(?:b)|(?:c)|d(?:)))e/
+    flatten, print
+
+/(?:ab)(?:)(?:(?:))(?:cd)/
+    flatten, print
+
+/a(?:(?s:(?:).))b/
+    flatten, print
+
+/(?:ab(?i)(?:c(?s:.))de)|(?i:f)/
+    flatten, print

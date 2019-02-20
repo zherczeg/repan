@@ -1,0 +1,65 @@
+# Testing bracket types.
+
+# Modifiers (i, m, s needs to be kept, the rest affects parse time only)
+
+/(?imsxn)ab(?-imsxn)c/
+    print
+
+/(?s)(?m)(?i)abc/
+    print
+
+/(?xixmim)ab(?mmm-mmmsss)c/
+    print
+
+/(?xxmxi)ab(?sss-sss)c/
+    print
+
+/(?:(?s)a.b)/
+    print
+
+/(?i:(?m)(?s)(?-i)a.b)/
+    print
+
+/(?ims)a(?^)b(?i)c(?^i)d(?n)e/
+    print
+
+/(?ims:a(?^:b)c(?^)d(?^:ee)f(?m:gg(?m:hh)))i/
+    print
+
+/(?m:a(?i-m:b)c(?-im)d)/
+    print
+
+/(?i:a(?m:b)c(?-m)d)/
+    print
+
+/(?i-m-m:a)/
+    print
+
+/(?i-m-m)a/
+    print
+
+/(?^i-m)a/
+    print
+
+/a(?is/
+    print
+
+/a(?iX/
+    print
+
+/(?n)(ab)(?<name>cd)(ef)\1/
+    print
+
+# Other types of brackets except conditional brackets
+
+/(?=pos_ahead)(?!neg_ahead)(?<=pos_behind)(?<!neg_behind)/
+    print
+
+/(?>atomic)/
+    print
+
+/a(?#comment\)b/
+    print
+
+/a(?#comment/
+    print

@@ -1,0 +1,52 @@
+# Test invalid UTF data
+
+/%7f_%c1%bf/u
+    print
+
+/%c2%80_%c1%bf/u
+    print
+
+/%c2%80_%c2/u
+    print
+
+/%c2%80_%c2___/u
+    print
+
+/%df%bf_%e0%a0%80_%e0%9f%bf/u
+    print
+
+/%ed%9f%bf_%ed%a0%80/u
+    print
+
+/%ee%80%80_%ed%bf%bf/u
+    print
+
+/%ef%bf%bf_%ef%bf/u
+    print
+
+/%ef%bf%bf_%ef%bf___/u
+    print
+
+/%f4%8f%bf%bf_%f4%90%80%80/u
+    print
+
+/%f0%90%80%80_%f0%8f%bf%bf/u
+    print
+
+/%f0%90%80%80_%f0%90/u
+    print
+
+/%f0%90%80%80_%f0%90___/u
+    print
+
+/%d7ff%d800/u16
+    print
+
+/%ffff%d800%d800/u16
+    print
+
+/%e000%dfff%d800%dc00/u16
+    print
+
+/%e000%dbff%dfff%d800%dc00%dc00/u16
+    print

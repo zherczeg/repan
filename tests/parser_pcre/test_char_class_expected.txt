@@ -1,0 +1,156 @@
+# Test character sets
+
+# Test character constants and ranges
+
+/a[bc]d/
+    print
+    /a[bc]d/
+
+/a[]-]b/
+    print
+    /a[\]\-]b/
+
+/a[^-A-DG-G]d/
+    print
+    /a[^\-A-DG]d/
+
+/a[b^]c/
+    print
+    /a[b\^]c/
+
+/a[\1\01\001\0001\x011\81\3777]b/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /a[\1\01\001\0001\x011[ HERE ]>>\81\3777]b/
+
+/a[\x{0000000000001}\o{00000000000000001}\N{U+00000000000000001}]b/
+    print
+    /a[\x{1}\x{1}\x{1}]b/
+
+/[]/
+    print
+    Pattern parse failed: Unterminated [...] character class
+        /[ HERE ]>>[]/
+
+/[\a\b\e\f\n\r\t]/
+    print
+    /[\a\b\e\f\n\r\t]/
+
+/[^\N{U+10ffff}\x{10ffff}\xfff]/u
+    ascii, print
+    /[^\x{10ffff}\x{10ffff}\x{ff}f]/
+
+/[a-c\x{100}]/
+    print
+    Pattern parse failed: Character value is too large
+        /[a-c[ HERE ]>>\x{100}]/
+
+/[.\x{1/
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /[.\x{1[ HERE ]>>/
+
+/[..\x{}]/
+    print
+    Pattern parse failed: A hexadecimal number enclosed in braces is required
+        /[..[ HERE ]>>\x{}]/
+
+/[.\o{1/
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /[.\o{1[ HERE ]>>/
+
+/[..\o{}]/
+    print
+    Pattern parse failed: An octal number enclosed in braces is required
+        /[..[ HERE ]>>\o{}]/
+
+/[.\N{U+1/
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /[.\N{U+1[ HERE ]>>/
+
+/[..\N{U+}]/
+    print
+    Pattern parse failed: A hexadecimal number enclosed in braces is required
+        /[..[ HERE ]>>\N{U+}]/
+
+/\cD\c][\cd\c]]/
+    print
+    /\x{4}\x{1d}[\x{4}\x{1d}]/
+
+/[\c%20\c%1f]/
+    print
+    Pattern parse failed: A printable ascii character is required after \c
+        /[\c [ HERE ]>>\c%1f]/
+
+/[\c%7e\c%7f]/
+    print
+    Pattern parse failed: A printable ascii character is required after \c
+        /[\c~[ HERE ]>>\c%7f]/
+
+# Perl character classes
+
+/[\d\D\h\H\s\S\v\V\w\W]/
+    print
+    /[\d\D\h\H\s\S\v\V\w\W]/
+
+/a[\d-a]b/
+    print
+    Pattern parse failed: Neither the start nor the end of a range can be a character class
+        /a[[ HERE ]>>\d-a]b/
+
+/a[a-\s]b/
+    print
+    Pattern parse failed: Neither the start nor the end of a range can be a character class
+        /a[[ HERE ]>>a-\s]b/
+
+/a[---\s]b/
+    print
+    /a[\-\s]b/
+
+/[\N]/
+    print
+    Pattern parse failed: Escaping ascii letters is not allowed in character class
+        /[[ HERE ]>>\N]/
+
+/[\R]/
+    print
+    Pattern parse failed: Escaping ascii letters is not allowed in character class
+        /[[ HERE ]>>\R]/
+
+# Unicode property support
+
+/[1\pL2\p{Cc}3]/
+    print
+    /[1\p{L}2\p{Cc}3]/
+
+/[1\p2]/
+    print
+    Pattern parse failed: A valid property letter or property name in {...} required after \p or \P
+        /[1[ HERE ]>>\p2]/
+
+# Posix character classes
+
+/[[:digit:]]/
+    print
+    /[\d]/
+
+/[^[:^word:]]/
+    print
+    /[^\W]/
+
+/[[:graph:]-a]/
+    print
+    Pattern parse failed: Neither the start nor the end of a range can be a character class
+        /[[ HERE ]>>[:graph:]-a]/
+
+/[a-[:upper:]]/
+    print
+    Pattern parse failed: Neither the start nor the end of a range can be a character class
+        /[[ HERE ]>>a-[:upper:]]/
+
+/[[:grap:]-a]/
+    print
+    /[\[:grap:]-a]/
+

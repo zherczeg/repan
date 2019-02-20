@@ -1,0 +1,86 @@
+# Test invalid UTF data
+
+/%7f_%c1%bf/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%7f_[ HERE ]>>%c1%bf/
+
+/%c2%80_%c1%bf/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%c2%80_[ HERE ]>>%c1%bf/
+
+/%c2%80_%c2/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%c2%80_[ HERE ]>>%c2/
+
+/%c2%80_%c2___/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%c2%80_[ HERE ]>>%c2___/
+
+/%df%bf_%e0%a0%80_%e0%9f%bf/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%df%bf_%e0%a0%80_[ HERE ]>>%e0%9f%bf/
+
+/%ed%9f%bf_%ed%a0%80/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%ed%9f%bf_[ HERE ]>>%ed%a0%80/
+
+/%ee%80%80_%ed%bf%bf/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%ee%80%80_[ HERE ]>>%ed%bf%bf/
+
+/%ef%bf%bf_%ef%bf/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%ef%bf%bf_[ HERE ]>>%ef%bf/
+
+/%ef%bf%bf_%ef%bf___/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%ef%bf%bf_[ HERE ]>>%ef%bf___/
+
+/%f4%8f%bf%bf_%f4%90%80%80/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%f4%8f%bf%bf_[ HERE ]>>%f4%90%80%80/
+
+/%f0%90%80%80_%f0%8f%bf%bf/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%f0%90%80%80_[ HERE ]>>%f0%8f%bf%bf/
+
+/%f0%90%80%80_%f0%90/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%f0%90%80%80_[ HERE ]>>%f0%90/
+
+/%f0%90%80%80_%f0%90___/u
+    print
+    Pattern parse failed: Invalid UTF character
+        /%f0%90%80%80_[ HERE ]>>%f0%90___/
+
+/%d7ff%d800/u16
+    print
+    Pattern parse failed: Invalid UTF character
+        /%d7ff[ HERE ]>>%d800/
+
+/%ffff%d800%d800/u16
+    print
+    Pattern parse failed: Invalid UTF character
+        /%ffff[ HERE ]>>%d800%d800/
+
+/%e000%dfff%d800%dc00/u16
+    print
+    Pattern parse failed: Invalid UTF character
+        /%e000[ HERE ]>>%dfff%d800%dc00/
+
+/%e000%dbff%dfff%d800%dc00%dc00/u16
+    print
+    Pattern parse failed: Invalid UTF character
+        /%e000%dbff%dfff%d800%dc00[ HERE ]>>%dc00/

@@ -1,0 +1,14 @@
+# Testing bracket types.
+
+/(ab)(?:cd)(?=ef)(?!gh)(?<=ij)(?<!kl)/J
+    print
+    /(ab)(?:cd)(?=ef)(?!gh)(?<=ij)(?<!kl)/
+
+/(?|ab)/J
+    print
+    Pattern parse failed: Invalid subpattern type
+        /[ HERE ]>>(?|ab)/
+
+/(?<name>ab)cd\k<name>/J
+    print
+    /(?<name>ab)cd\g{name}/

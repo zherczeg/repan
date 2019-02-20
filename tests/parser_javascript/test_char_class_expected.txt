@@ -1,0 +1,47 @@
+# Test character sets
+
+/[\a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z]/J
+    print
+    /[a\bc\de\fghijklm\nopq\r\s\tu\x{b}\wxyz]/
+
+/[\A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z]/J
+    print
+    /[ABC\DEFGHIJKLMNOPQR\STUV\WXYZ]/
+
+/[\cA\ca\c_\c0\c#]/J
+    print
+    /[\x{1}\x{1}\x{1f}\x{10}c#]/
+
+/[].[^]/J
+    print
+    /(*FAIL).\p{Any}/
+
+# Test character ranges
+
+/[a-f---\b-\n]/J
+    print
+    /[a-f\-\b-\n]/
+
+/[f-a]/J
+    print
+    Pattern parse failed: Range start and end are out of order
+        /[[ HERE ]>>f-a]/
+
+/[\d-\d\w-ak-\W]/J
+    print
+    /[\d\-\d\w\-ak\-\W]/
+
+/[\d-a-f]/J
+    print
+    /[\d\-a\-f]/
+
+# Unicode property support
+
+/[1\pL2\p{Cc}3]/J
+    print
+    /[1pL2\p{Cc}3]/
+
+/[\pX\p{Unknown}]/J
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[\pX[ HERE ]>>\p{Unknown}]/

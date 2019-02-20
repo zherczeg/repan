@@ -1,0 +1,106 @@
+# Test character sets
+
+# Test character constants and ranges
+
+/a[bc]d/
+    print
+
+/a[]-]b/
+    print
+
+/a[^-A-DG-G]d/
+    print
+
+/a[b^]c/
+    print
+
+/a[\1\01\001\0001\x011\81\3777]b/
+    print
+
+/a[\x{0000000000001}\o{00000000000000001}\N{U+00000000000000001}]b/
+    print
+
+/[]/
+    print
+
+/[\a\b\e\f\n\r\t]/
+    print
+
+/[^\N{U+10ffff}\x{10ffff}\xfff]/u
+    ascii, print
+
+/[a-c\x{100}]/
+    print
+
+/[.\x{1/
+    print
+
+/[..\x{}]/
+    print
+
+/[.\o{1/
+    print
+
+/[..\o{}]/
+    print
+
+/[.\N{U+1/
+    print
+
+/[..\N{U+}]/
+    print
+
+/\cD\c][\cd\c]]/
+    print
+
+/[\c%20\c%1f]/
+    print
+
+/[\c%7e\c%7f]/
+    print
+
+# Perl character classes
+
+/[\d\D\h\H\s\S\v\V\w\W]/
+    print
+
+/a[\d-a]b/
+    print
+
+/a[a-\s]b/
+    print
+
+/a[---\s]b/
+    print
+
+/[\N]/
+    print
+
+/[\R]/
+    print
+
+# Unicode property support
+
+/[1\pL2\p{Cc}3]/
+    print
+
+/[1\p2]/
+    print
+
+# Posix character classes
+
+/[[:digit:]]/
+    print
+
+/[^[:^word:]]/
+    print
+
+/[[:graph:]-a]/
+    print
+
+/[a-[:upper:]]/
+    print
+
+/[[:grap:]-a]/
+    print
+

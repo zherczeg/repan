@@ -1,0 +1,81 @@
+# Test verbs
+
+/(*F)(*FAIL:abc)(*:abc)(*ACCEPT:)/
+    print
+    /(*FAIL)(*FAIL:abc)(*MARK:abc)(*ACCEPT)/
+
+/_(*PRUNE)(*UNKNOWN_VERB:abc)_/
+    print
+    Pattern parse failed: Unknown control verb
+        /_(*PRUNE)[ HERE ]>>(*UNKNOWN_VERB:abc)_/
+
+/(*:)/
+    print
+    Pattern parse failed: Argument for (*MARK) control verb is expected
+        /(*:[ HERE ]>>)/
+
+/(*MARK)/
+    print
+    Pattern parse failed: A colon (:) is expected
+        /(*MARK[ HERE ]>>)/
+
+/(*MARK=abc)/
+    print
+    Pattern parse failed: A colon (:) is expected
+        /(*MARK[ HERE ]>>=abc)/
+
+/(*COMMIT:abc/
+    print
+    Pattern parse failed: A right bracket is expected
+        /(*COMMIT:abc[ HERE ]>>/
+
+/(*SKIP=abc)/
+    print
+    Pattern parse failed: A right bracket is expected
+        /(*SKIP[ HERE ]>>=abc)/
+
+# Test PCRE initial options
+
+/(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/
+    print
+    /(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/
+
+/(*F)(*UCP)/
+    print
+    Pattern parse failed: Unknown control verb
+        /(*F)[ HERE ]>>(*UCP)/
+
+/(*NO_JIT)(*UNKNOWN_VERB:abc)/
+    print
+    Pattern parse failed: Unknown control verb
+        /(*NO_JIT)[ HERE ]>>(*UNKNOWN_VERB:abc)/
+
+/(*LIMIT_DEPTH=1024)/
+    print
+    /(*LIMIT_DEPTH=1024)/
+
+/(*LIMIT_HEAP)/
+    print
+    Pattern parse failed: An equals sign (=) is expected
+        /(*LIMIT_HEAP[ HERE ]>>)/
+
+/(*LIMIT_MATCH=)/
+    print
+    Pattern parse failed: A decimal unsigned integer is required
+        /(*LIMIT_MATCH=[ HERE ]>>)/
+
+# Test script run
+
+/(*sr:abc)(*script_run:def)/
+    print
+    /((*script_run:abc)((*script_run:def)/
+
+/(*sr)/
+    print
+    Pattern parse failed: A colon (:) is expected
+        /(*sr[ HERE ]>>)/
+
+/(*script_run=abc)/
+    print
+    Pattern parse failed: A colon (:) is expected
+        /(*script_run[ HERE ]>>=abc)/

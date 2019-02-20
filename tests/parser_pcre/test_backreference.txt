@@ -1,0 +1,99 @@
+# Test backreferences
+
+/(a)(?|(b)(c)|(d)e)\g0001\g{001}\g{-001}\g{+001}(f)/
+    print
+
+/(?|(a)|(?|(b)(c)|(d))|(e))(f)\g{-1}/
+    print
+
+/(?<name>AA)\g{name}/
+    print
+
+/(?<xx>aa)\g2x\g{yy}(?<yy>bb)/
+    print
+
+/(?<xx>aa)\g{2}/
+    print
+
+/(aa)\g(1)/
+    print
+
+/(?'name'AA)\g{name2}/
+    print
+
+/()\g--1/
+    print
+
+/()\g00001\g0000/
+    print
+
+/()\g-2/
+    print
+
+/()\g{10000000000000000000000000000}/
+    print
+
+/()\g2/
+    print
+
+/()\g0/
+    print
+
+/()\g{a!}/
+    print
+
+/(?<name>AA)\k{name}\k<name>\k'name'/
+    print
+
+/\kA/
+    print
+
+/\k<A/
+    print
+
+/\k<>/
+    print
+
+/\k<0>/
+    print
+
+/\k{A/
+    print
+
+/\k'A/
+    print
+
+/(?P<name>AA)(?P=name)/
+    print
+
+/(?P<name>AA)(?P=)/
+    print
+
+/(?P<name>AA)(?P=name/
+    print
+
+# Backreference or octal number parsing
+
+/(1)(2)\2/
+    print
+
+/(1)(2)\5(3)(4)(5)/
+    print
+
+/(1)(2)\5/
+    print
+
+/(1)(2)\1a/
+    print
+
+/(1)(2)\77/
+    print
+
+/(1)(2)\80/
+    print
+
+/(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(?|(13)|\12)/
+    print
+
+/(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(?|(13)|\13)/
+    print

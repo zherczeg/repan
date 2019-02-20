@@ -1,0 +1,32 @@
+# Test uncapture optimization
+
+/(?|(aa)(bb)|(cc))(dd)\g1/
+    uncapture, print
+
+/(?|(aa)(bb)|(cc))(dd)\g2/
+    uncapture, print
+
+/(?|(aa)(bb)|(cc))(dd)\g3/
+    uncapture, print
+
+/\g4(?5)(?|(aa)(?|(bb)(cc)|(dd)(ee)(ff)|(gg))|(hh))(ii)/
+    uncapture, print
+
+/(?|(aa)(?|(bb)(cc)|(dd)(ee)(ff)|(gg))|(cc))(dd)(?(2)ee)(?(R1)ff)/
+    uncapture, print
+
+/(?|(?<name1>aa)(bb)(?<name2>cc)|(dd))\g{name1}/
+    uncapture, print
+
+/(?|(aa)(bb)(?<name2>cc)|(dd)(?<name1>ee)(ff)(?<name3>gg))(?&name1)/
+    uncapture, print
+
+/(?<name1>aa)(bb(?(<name2>)x)cc)(?<name3>dd)|(?<name2>ee)/u
+    uncapture, print
+
+/(?|(?<name1>aa)(?<name1>bb)(cc)(?<name1>dd)|(ee)(?<name2>ee))(?(R&name1)ff)/u
+    uncapture, print
+
+/(?|(?<name1>aa)(?<name1>bb)(cc)|(dd)(?<name2>ee)(?<name2>ff)(ee))\g{name1}(?&name2)/
+    uncapture, print
+

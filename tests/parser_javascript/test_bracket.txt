@@ -1,0 +1,10 @@
+# Testing bracket types.
+
+/(ab)(?:cd)(?=ef)(?!gh)(?<=ij)(?<!kl)/J
+    print
+
+/(?|ab)/J
+    print
+
+/(?<name>ab)cd\k<name>/J
+    print

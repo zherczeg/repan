@@ -1,0 +1,48 @@
+# Test escape sequences
+
+/\+\?\*\{\^\$\.\\\(\[/J
+    print
+
+/\a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z/J
+    print
+
+/\A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z/J
+    print
+
+/()\1\2\0033/J
+    print
+
+/\80\90/J
+    print
+
+/\x\x1\x112/J
+    print
+
+/\ud7ff\ue000\u{10fFf}\ud800\udc00/16uJ
+    ascii, print
+
+/\u\u1\u12\u123\u1234\u12345/16uJ
+    ascii, print
+
+/\ud800#/16uJ
+    print
+
+/\udfff#/16uJ
+    print
+
+/\ud800\udc/16uJ
+    ascii, print
+
+# Unicode property support
+
+/\pL\p{L}\P{Cc}\p{SignWriting}/J
+    print
+
+/\pA/J
+    print
+
+/\p{Unknown}/J
+    print
+
+/\p{Unk!nown}/J
+    print

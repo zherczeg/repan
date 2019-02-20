@@ -1,0 +1,151 @@
+# Test backreferences
+
+/(a)(?|(b)(c)|(d)e)\g0001\g{001}\g{-001}\g{+001}(f)/
+    print
+    /(a)(?|(b)(c)|(d)e)\g{1}\g{1}\g{3}\g{4}(f)/
+
+/(?|(a)|(?|(b)(c)|(d))|(e))(f)\g{-1}/
+    print
+    /(?|(a)|(?|(b)(c)|(d))|(e))(f)\g{3}/
+
+/(?<name>AA)\g{name}/
+    print
+    /(?<name>AA)\g{name}/
+
+/(?<xx>aa)\g2x\g{yy}(?<yy>bb)/
+    print
+    /(?<xx>aa)\g{2}x\g{yy}(?<yy>bb)/
+
+/(?<xx>aa)\g{2}/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?<xx>aa)\g{[ HERE ]>>2}/
+
+/(aa)\g(1)/
+    print
+    Pattern parse failed: A decimal unsigned integer is required
+        /(aa)\g[ HERE ]>>(1)/
+
+/(?'name'AA)\g{name2}/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?'name'AA)\g{[ HERE ]>>name2}/
+
+/()\g--1/
+    print
+    Pattern parse failed: A decimal unsigned integer is required
+        /()\g[ HERE ]>>--1/
+
+/()\g00001\g0000/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /()\g00001\g[ HERE ]>>0000/
+
+/()\g-2/
+    print
+    Pattern parse failed: A decimal unsigned integer is required
+        /()\g[ HERE ]>>-2/
+
+/()\g{10000000000000000000000000000}/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /()\g{[ HERE ]>>10000000000000000000000000000}/
+
+/()\g2/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /()\g[ HERE ]>>2/
+
+/()\g0/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /()\g[ HERE ]>>0/
+
+/()\g{a!}/
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /()\g{a[ HERE ]>>!}/
+
+/(?<name>AA)\k{name}\k<name>\k'name'/
+    print
+    /(?<name>AA)\g{name}\g{name}\g{name}/
+
+/\kA/
+    print
+    Pattern parse failed: Only left brace ({), less than sign (<) or apostrophe (') are allowed after \k
+        /[ HERE ]>>\kA/
+
+/\k<A/
+    print
+    Pattern parse failed: A greater than sign (>) is expected
+        /\k<A[ HERE ]>>/
+
+/\k<>/
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /\k<[ HERE ]>>>/
+
+/\k<0>/
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /\k<[ HERE ]>>0>/
+
+/\k{A/
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /\k{A[ HERE ]>>/
+
+/\k'A/
+    print
+    Pattern parse failed: An apostrophe (') is expected
+        /\k'A[ HERE ]>>/
+
+/(?P<name>AA)(?P=name)/
+    print
+    /(?<name>AA)\g{name}/
+
+/(?P<name>AA)(?P=)/
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /(?P<name>AA)(?P=[ HERE ]>>)/
+
+/(?P<name>AA)(?P=name/
+    print
+    Pattern parse failed: A right bracket is expected
+        /(?P<name>AA)(?P=name[ HERE ]>>/
+
+# Backreference or octal number parsing
+
+/(1)(2)\2/
+    print
+    /(1)(2)\g{2}/
+
+/(1)(2)\5(3)(4)(5)/
+    print
+    /(1)(2)\g{5}(3)(4)(5)/
+
+/(1)(2)\5/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(1)(2)[ HERE ]>>\5/
+
+/(1)(2)\1a/
+    print
+    /(1)(2)\g{1}a/
+
+/(1)(2)\77/
+    print
+    /(1)(2)\?/
+
+/(1)(2)\80/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(1)(2)[ HERE ]>>\80/
+
+/(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(?|(13)|\12)/
+    print
+    /(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(?|(13)|\g{12})/
+
+/(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(?|(13)|\13)/
+    print
+    /(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(?|(13)|\x{b})/

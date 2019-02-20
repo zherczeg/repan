@@ -1,0 +1,225 @@
+# Test escape sequences
+
+/\+\?\*\{\^\$\.\\\(\[/
+    print
+    /\+\?\*\{\^\$\.\\\(\[/
+
+/\x23\x{000023}\N{U+0023}/
+    print
+    /###/
+
+# \c - control-x
+# \g - unified backreference
+# \k - named backreference
+# \o - octal number enclosed in braces
+# \p{...} - unicode property name
+# \x - hexadecimal number
+
+/\a\b\d\e\f\h\i\j\l\m\n\q\r\s\t\u\v\w\y\z/
+    print
+    /\a\b\d\e\f\hijlm\nq\r\s\tu\v\wy\z/
+
+# \P{...} - negated unicode property name
+# \Q - part of \Q...\E sequence
+# \E - stray \E is removed
+
+/\A\B\C\D\F\G\H\I\J\K\L\M\N\O\R\S\T\U\V\W\C\Y\Z/
+    print
+    /\A\B\C\DF\G\HIJ\KLM\NO\R\STU\V\W\CY\Z/
+
+/\d+\D*\h?\H+?\s*?\S??\v++\V*+\w?+\W{4}\R{0,7}?.{4,6}+\N+?\C{5}?/
+    print
+    /\d+\D*\h?\H+?\s*?\S??\v++\V*+\w?+\W{4}\R{0,7}?.{4,6}+\N+?\C{5}/
+
+/^$\b\B/
+    print
+    /^$\b\B/
+
+/\x07\x1b\x0c\x0d\x0a\x09/
+    print
+    /\a\e\f\r\n\t/
+
+/%07%1b%0c%0d%0a%09/
+    print
+    /\a\e\f\r\n\t/
+
+/\a+\e*\f?\r{0,7}\n*+\t??/
+    print
+    /\a+\e*\f?\r{0,7}\n*+\t??/
+
+/\b{3}/
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /\b[ HERE ]>>{3}/
+
+/^{3}/
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /^[ HERE ]>>{3}/
+
+# Hexadecimal and octal encodings
+
+/\x23\x{000023/
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /\x23\x{000023[ HERE ]>>/
+
+/\x{000000000000000}\o{000000000000000}\N{U+000000000000000}/
+    print
+    /\x{0}\x{0}\x{0}/
+
+/\x1\01\00127\07272\037\040/u
+    print
+    /\x{1}\x{1}\x{1}27:72\x{1f} /
+
+/\x7e\x7f\x{80}\o{177}/
+    print
+    /~%7f%80%7f/
+    ascii, print
+    /~\x{7f}\x{80}\x{7f}/
+
+/\x{}/
+    print
+    Pattern parse failed: A hexadecimal number enclosed in braces is required
+        /[ HERE ]>>\x{}/
+
+/\x{00ff}\x{100}/
+    print
+    Pattern parse failed: Character value is too large
+        /\x{00ff}[ HERE ]>>\x{100}/
+
+/\o{00177777}\o{200000}/16
+    print
+    Pattern parse failed: Character value is too large
+        /\o{00177777}[ HERE ]>>\o{200000}/
+
+/\N{U+0010ffff}\N{U+110000}/u
+    print
+    Pattern parse failed: Character value is too large
+        /\N{U+0010ffff}[ HERE ]>>\N{U+110000}/
+
+/\N{Latin Capital letter A}/u
+    print
+    Pattern parse failed: Unicode codepoint names are not supported
+        /[ HERE ]>>\N{Latin Capital letter A}/
+
+# \Q...\E sequence
+
+/a\Q+?*{^$.\([\Ec/
+    print
+    /a\+\?\*\{\^\$\.\\\(\[c/
+
+/\E\Q\\Ec/
+    print
+    /\\c/
+
+/a\Eb/
+    print
+    /ab/
+
+/\Qabc\E+/
+    print
+    /abc+/
+
+/abc\E+/
+    print
+    /abc+/
+
+/ab\Q\E+c/
+    print
+    /ab+c/
+
+/(ab)\Q\E*c/
+    print
+    /(ab)*c/
+
+/(ab)\Q\E\E\E\Q\E\E*c/
+    print
+    /(ab)*c/
+
+/a\Qab\/
+    print
+    Pattern parse failed: Unterminated \Q...\E sequence
+        /a[ HERE ]>>\Qab\/
+
+# Control-x sequence
+
+/\ca\cA/
+    print
+    /\x{1}\x{1}/
+
+/\c\/
+    print
+    /\x{1c}/
+
+/\c/
+    print
+    Pattern parse failed: A printable ascii character is required after \c
+        /[ HERE ]>>\c/
+
+/\c%7f/
+    print
+    Pattern parse failed: A printable ascii character is required after \c
+        /[ HERE ]>>\c%7f/
+
+/\c%1f/
+    print
+    Pattern parse failed: A printable ascii character is required after \c
+        /[ HERE ]>>\c%1f/
+
+# Unicode support
+
+/\x{d800}/
+    print
+    Pattern parse failed: Character value is too large
+        /[ HERE ]>>\x{d800}/
+
+/\x{d800}/16
+    print
+    /%d800/
+
+/\x{d7ff}\x{d800}d/16u
+    print
+    Pattern parse failed: Invalid UTF character
+        /\x{d7ff}[ HERE ]>>\x{d800}d/
+
+/\x{e000}\x{dfff}d/16u
+    print
+    Pattern parse failed: Invalid UTF character
+        /\x{e000}[ HERE ]>>\x{dfff}d/
+
+/\o{153777}\o{154000}d/16u
+    print
+    Pattern parse failed: Invalid UTF character
+        /\o{153777}[ HERE ]>>\o{154000}d/
+
+/\o{160000}\o{157777}d/16u
+    print
+    Pattern parse failed: Invalid UTF character
+        /\o{160000}[ HERE ]>>\o{157777}d/
+
+# Unicode property support
+
+/\pL\p{L}\P{Cc}\p{L&}\p{SignWriting}/
+    print
+    /\p{L}\p{L}\P{Cc}\p{L&}\p{SignWriting}/
+
+/\pA/
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\pA/
+
+/\p{Unknown}/
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\p{Unknown}/
+
+/\p#/
+    print
+    Pattern parse failed: A valid property letter or property name in {...} required after \p or \P
+        /[ HERE ]>>\p#/
+
+/\p{Unk!nown}/
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /\p{Unk[ HERE ]>>!nown}/

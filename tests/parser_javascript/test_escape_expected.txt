@@ -1,0 +1,68 @@
+# Test escape sequences
+
+/\+\?\*\{\^\$\.\\\(\[/J
+    print
+    /\+\?\*\{\^\$\.\\\(\[/
+
+/\a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z/J
+    print
+    /a\bc\de\fghijlm\nopq\r\s\tu\x{b}\wxyz/
+
+/\A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z/J
+    print
+    /A\BC\DEFGHIJKLMNOPQR\STUV\WXYZ/
+
+/()\1\2\0033/J
+    print
+    /()\g{1}\x{2}\x{3}3/
+
+/\80\90/J
+    print
+    /880990/
+
+/\x\x1\x112/J
+    print
+    /xx1\x{11}2/
+
+/\ud7ff\ue000\u{10fFf}\ud800\udc00/16uJ
+    ascii, print
+    /\x{d7ff}\x{e000}\x{10fff}\x{10000}/
+
+/\u\u1\u12\u123\u1234\u12345/16uJ
+    ascii, print
+    /uu1u12u123\x{1234}\x{1234}5/
+
+/\ud800#/16uJ
+    print
+    Pattern parse failed: Invalid UTF character
+        /[ HERE ]>>\ud800#/
+
+/\udfff#/16uJ
+    print
+    Pattern parse failed: Invalid UTF character
+        /[ HERE ]>>\udfff#/
+
+/\ud800\udc/16uJ
+    ascii, print
+    Pattern parse failed: Invalid UTF character
+        /[ HERE ]>>\ud800\udc/
+
+# Unicode property support
+
+/\pL\p{L}\P{Cc}\p{SignWriting}/J
+    print
+    /pL\p{L}\P{Cc}\p{SignWriting}/
+
+/\pA/J
+    print
+    /pA/
+
+/\p{Unknown}/J
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\p{Unknown}/
+
+/\p{Unk!nown}/J
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /\p{Unk[ HERE ]>>!nown}/

@@ -1,0 +1,35 @@
+# Test character sets
+
+/[\a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z]/J
+    print
+
+/[\A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z]/J
+    print
+
+/[\cA\ca\c_\c0\c#]/J
+    print
+
+/[].[^]/J
+    print
+
+# Test character ranges
+
+/[a-f---\b-\n]/J
+    print
+
+/[f-a]/J
+    print
+
+/[\d-\d\w-ak-\W]/J
+    print
+
+/[\d-a-f]/J
+    print
+
+# Unicode property support
+
+/[1\pL2\p{Cc}3]/J
+    print
+
+/[\pX\p{Unknown}]/J
+    print

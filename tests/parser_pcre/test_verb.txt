@@ -1,0 +1,53 @@
+# Test verbs
+
+/(*F)(*FAIL:abc)(*:abc)(*ACCEPT:)/
+    print
+
+/_(*PRUNE)(*UNKNOWN_VERB:abc)_/
+    print
+
+/(*:)/
+    print
+
+/(*MARK)/
+    print
+
+/(*MARK=abc)/
+    print
+
+/(*COMMIT:abc/
+    print
+
+/(*SKIP=abc)/
+    print
+
+# Test PCRE initial options
+
+/(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/
+    print
+
+/(*F)(*UCP)/
+    print
+
+/(*NO_JIT)(*UNKNOWN_VERB:abc)/
+    print
+
+/(*LIMIT_DEPTH=1024)/
+    print
+
+/(*LIMIT_HEAP)/
+    print
+
+/(*LIMIT_MATCH=)/
+    print
+
+# Test script run
+
+/(*sr:abc)(*script_run:def)/
+    print
+
+/(*sr)/
+    print
+
+/(*script_run=abc)/
+    print

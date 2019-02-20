@@ -1,0 +1,71 @@
+# Testing quantifiers.
+
+/(a)*(a)+(a)?/
+    print
+    /(a)*(a)+(a)?/
+
+/(a)*?(a)+?(a)??/
+    print
+    /(a)*?(a)+?(a)??/
+
+/(a)*+(a)++(a)?+/
+    print
+    /(a)*+(a)++(a)?+/
+
+/(a){0,}(a){1,}(a){0,1}(a){1}(a){1,1}/
+    print
+    /(a)*(a)+(a)?(a)(a)/
+
+/(a){0,}?(a){1,}?(a){0,1}?(a){1}?(a){1,1}?/
+    print
+    /(a)*?(a)+?(a)??(a)(a)/
+
+/(a){0,}+(a){1,}+(a){0,1}+(a){1}+(a){1,1}+/
+    print
+    /(a)*+(a)++(a)?+(a)(a)/
+
+/(a){1000,2000}(b){1000,1000}(c){1000,1000}?(d){1000,1000}+/
+    print
+    /(a){1000,2000}(b){1000}(c){1000}(d){1000}/
+
+/(?:a)(?:b){1}c{1}d{3,5}(?:)+(?:^){0,7}/
+    print
+    /abcd{3,5}(?:)+(?:^){0,7}/
+
+/(a){10000000000000,2000000000000}/
+    print
+    Pattern parse failed: Too big quantifier in {} repeat
+        /(a){[ HERE ]>>10000000000000,2000000000000}/
+
+/(a){/
+    print
+    /(a)\{/
+
+/(a){0,/
+    print
+    /(a)\{0,/
+
+/(a){10000000000000/
+    print
+    Pattern parse failed: Too big quantifier in {} repeat
+        /(a){[ HERE ]>>10000000000000/
+
+/(a){1}*/
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /(a){1}[ HERE ]>>*/
+
+/a{1}*/
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /a{1}[ HERE ]>>*/
+
+/a{3,}{4,}/
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /a{3,}[ HERE ]>>{4,}/
+
+/(a){3,}{4,}/
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /(a){3,}[ HERE ]>>{4,}/

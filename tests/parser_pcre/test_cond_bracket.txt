@@ -1,0 +1,93 @@
+# Testing conditional brackets
+
+# Testing capturing brackets
+
+/(?(0)abc)/
+    print
+
+/(?(1)abc)()/
+    print
+
+/(?(1)abc)/
+    print
+
+/()()(?(-2)abc)/
+    print
+
+/()(?(-2)abc)/
+    print
+
+/(?(+2)abc)()()/
+    print
+
+/(?(+2)abc)()/
+    print
+
+/(?(<name>)abc)(?<name>)/
+    print
+
+/(?('name')abc)(?<name>)/
+    print
+
+/(?('name')abc)/
+    print
+
+/(?('name)abc)/
+    print
+
+/(?(<name)abc)/
+    print
+
+/(?('name'abc)/
+    print
+
+# Testing recursion
+
+/(?(R00000)ab)(?(R)cd)/
+    print
+
+/(?(R+1)abcd)()/
+    print
+
+/()()(?(R+0002)abcd)()()/
+    print
+
+/(?(R+000)abcd)/
+    print
+
+/(?(R&name)abcd)()(?<name>)/
+    print
+
+/(?(R&name)abcd)()()/
+    print
+
+# Testing conditional assertions
+
+/(?(?=a)b)/
+    print
+
+/(?(?!a)b|c)/
+    print
+
+/(?(?<=a)(b|c|d|e)|(f|g|h|i))/
+    print
+
+/(?(?<=a)b|c|d)/
+    print
+
+/(?(?:a)b|c)/
+    print
+
+/(?(?=a).(?=c)?.)/
+    print
+
+/(?(?=a)?.(?=c)?.)/
+    print
+
+# Testing define blocks
+
+/(?(DEFINE)(a|b|c)(d|e|f))/
+    print
+
+/(?(DEFINE)abc|def/
+    print

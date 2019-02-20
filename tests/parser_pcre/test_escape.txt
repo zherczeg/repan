@@ -1,0 +1,158 @@
+# Test escape sequences
+
+/\+\?\*\{\^\$\.\\\(\[/
+    print
+
+/\x23\x{000023}\N{U+0023}/
+    print
+
+# \c - control-x
+# \g - unified backreference
+# \k - named backreference
+# \o - octal number enclosed in braces
+# \p{...} - unicode property name
+# \x - hexadecimal number
+
+/\a\b\d\e\f\h\i\j\l\m\n\q\r\s\t\u\v\w\y\z/
+    print
+
+# \P{...} - negated unicode property name
+# \Q - part of \Q...\E sequence
+# \E - stray \E is removed
+
+/\A\B\C\D\F\G\H\I\J\K\L\M\N\O\R\S\T\U\V\W\C\Y\Z/
+    print
+
+/\d+\D*\h?\H+?\s*?\S??\v++\V*+\w?+\W{4}\R{0,7}?.{4,6}+\N+?\C{5}?/
+    print
+
+/^$\b\B/
+    print
+
+/\x07\x1b\x0c\x0d\x0a\x09/
+    print
+
+/%07%1b%0c%0d%0a%09/
+    print
+
+/\a+\e*\f?\r{0,7}\n*+\t??/
+    print
+
+/\b{3}/
+    print
+
+/^{3}/
+    print
+
+# Hexadecimal and octal encodings
+
+/\x23\x{000023/
+    print
+
+/\x{000000000000000}\o{000000000000000}\N{U+000000000000000}/
+    print
+
+/\x1\01\00127\07272\037\040/u
+    print
+
+/\x7e\x7f\x{80}\o{177}/
+    print
+    ascii, print
+
+/\x{}/
+    print
+
+/\x{00ff}\x{100}/
+    print
+
+/\o{00177777}\o{200000}/16
+    print
+
+/\N{U+0010ffff}\N{U+110000}/u
+    print
+
+/\N{Latin Capital letter A}/u
+    print
+
+# \Q...\E sequence
+
+/a\Q+?*{^$.\([\Ec/
+    print
+
+/\E\Q\\Ec/
+    print
+
+/a\Eb/
+    print
+
+/\Qabc\E+/
+    print
+
+/abc\E+/
+    print
+
+/ab\Q\E+c/
+    print
+
+/(ab)\Q\E*c/
+    print
+
+/(ab)\Q\E\E\E\Q\E\E*c/
+    print
+
+/a\Qab\/
+    print
+
+# Control-x sequence
+
+/\ca\cA/
+    print
+
+/\c\/
+    print
+
+/\c/
+    print
+
+/\c%7f/
+    print
+
+/\c%1f/
+    print
+
+# Unicode support
+
+/\x{d800}/
+    print
+
+/\x{d800}/16
+    print
+
+/\x{d7ff}\x{d800}d/16u
+    print
+
+/\x{e000}\x{dfff}d/16u
+    print
+
+/\o{153777}\o{154000}d/16u
+    print
+
+/\o{160000}\o{157777}d/16u
+    print
+
+# Unicode property support
+
+/\pL\p{L}\P{Cc}\p{L&}\p{SignWriting}/
+    print
+
+/\pA/
+    print
+
+/\p{Unknown}/
+    print
+
+/\p#/
+    print
+
+/\p{Unk!nown}/
+    print

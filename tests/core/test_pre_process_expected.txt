@@ -1,0 +1,48 @@
+# Testing pattern pre-processing.
+#
+# Patterns must be enclosed in / ! " ' @
+#
+# The test system pre-process patterns before it passes to the repan library.
+# The following escape sequences are supported:
+#
+#    % followed by ; is converted to %
+#    % followed by the pattern enclosing character is
+#          converted to the pattern enclosing character
+#    % followed by a hexadecimal character sequence is
+#          converted to a single character
+#          - can be optionally terminated by a ;
+#          - hexadecimal characters: [0-9] [a-f]
+#
+#    Note: otherwise the % is processed as a normal character
+
+/ab%a%000b;a%23%0023;%80;%80;A/8
+    print
+    /ab\n\x{b}a##%80%80A/
+
+/ab%a%000b;a%23%0023;%80;%80;A/16
+    print
+    /ab\n\x{b}a##%80%80A/
+
+!%!_%;%;_%%;_%%;a_%!!8
+    print
+    !%!_%%_%%_%%;a_%!!
+
+!%!_%;%;_%%;_%%;a_%!!16
+    print
+    !%!_%%_%%_%%;a_%!!
+
+"%ffffffff%FFFFFFFF"8
+    print
+    "%ff%FFFFFFFF"
+
+"%ffffffff%FFFFFFFF"16
+    print
+    "%ffff%FFFFFFFF"
+
+@%0006789%1234567890@8
+    print
+    @%89%90@
+
+@%0006789%1234567890@16
+    print
+    @%6789%7890@

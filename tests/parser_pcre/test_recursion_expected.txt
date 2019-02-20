@@ -1,0 +1,88 @@
+# Test recursions
+
+/(a)(?-1)(?+1)(?1)(b)/
+    print
+    /(a)(?1)(?2)(?1)(b)/
+
+/a(?R)(?000000)b/
+    print
+    /a(?R)(?R)b/
+
+/(?&abc)(?<abc>a)/
+    print
+    /(?&abc)(?<abc>a)/
+
+/(?<Aa_9>a)(?&Aa_9)/
+    print
+    /(?<Aa_9>a)(?&Aa_9)/
+
+/(?P<Zz_0>a)(?P>Zz_0)/
+    print
+    /(?<Zz_0>a)(?&Zz_0)/
+
+/(?P<name>AA)(?P>name)/
+    print
+    /(?<name>AA)(?&name)/
+
+/a(?RR)b/
+    print
+    Pattern parse failed: A right bracket is expected
+        /a(?R[ HERE ]>>R)b/
+
+/a(?-0)b/
+    print
+    Pattern parse failed: Decimal zero with sign (+0 or -0) is not allowed
+        /a(?[ HERE ]>>-0)b/
+
+/a(?-1)b/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /a(?[ HERE ]>>-1)b/
+
+/a(?0000b/
+    print
+    Pattern parse failed: A right bracket is expected
+        /a(?0000[ HERE ]>>b/
+
+/(?&0)/
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /(?&[ HERE ]>>0)/
+
+/(?P>0)/
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /(?P>[ HERE ]>>0)/
+
+/(?&abc)/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?&[ HERE ]>>abc)/
+
+/(?&abc)\x{}/
+    print
+    Pattern parse failed: A hexadecimal number enclosed in braces is required
+        /(?&abc)[ HERE ]>>\x{}/
+
+/(?P>name2)/
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(?P>[ HERE ]>>name2)/
+
+/(a)\g'-1'\g<1>/
+    print
+    /(a)(?1)(?1)/
+
+/(?<ab>a)\g<ab>\g'ab'/
+    print
+    /(?<ab>a)(?&ab)(?&ab)/
+
+/\g<ab/
+    print
+    Pattern parse failed: A greater than sign (>) is expected
+        /\g<ab[ HERE ]>>/
+
+/\g''/
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /\g'[ HERE ]>>'/
