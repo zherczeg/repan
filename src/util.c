@@ -101,6 +101,8 @@ const char *repan_get_error_message(uint32_t error)
         return "A printable ascii character is required after \\c";
     case REPAN_ERR_INVALID_P_SEQUENCE:
         return "A valid property letter or property name in {...} required after \\p or \\P";
+    case REPAN_ERR_INVALID_U_SEQUENCE:
+        return "Four hexadecimal digits are required after \\u";
     case REPAN_ERR_UNKNOWN_PROPERTY:
         return "Unknown \\p or \\P property";
     case REPAN_ERR_UNKNOWN_VERB:

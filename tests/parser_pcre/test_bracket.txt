@@ -47,8 +47,29 @@
 /a(?iX/
     print
 
+# Non-capturing group
+
 /(?n)(ab)(?<name>cd)(ef)\1/
     print
+
+/(ab)(?n:(cd)(ef))(gh)/
+    print
+
+# Extended regexp
+
+/(?x)   a
+  b	\   c
+   # comment
+   d
+   ### comment ###/
+    print
+
+/(?xx)[ a b	c \  d]/
+    print
+
+/a  (?x:  b	c   d)  e/
+    print
+
 
 # Other types of brackets except conditional brackets
 

@@ -55,9 +55,11 @@
 #define REPAN_CHAR_LESS_THAN_SIGN '<'
 #define REPAN_CHAR_GREATER_THAN_SIGN '>'
 #define REPAN_CHAR_APOSTROPHE '\''
-#define REPAN_CHAR_HASHMARK '#'
 
 #define REPAN_CHAR_UNDERSCORE '_'
+
+#define REPAN_CHAR_HASHMARK '#'
+#define REPAN_CHAR_SPACE ' '
 
 #define REPAN_ESC_a 0x07
 #define REPAN_ESC_b 0x08
@@ -145,6 +147,7 @@
 
 int REPAN_PRIV(is_word_char)(uint32_t chr);
 int REPAN_PRIV(is_space)(uint32_t chr);
+int REPAN_PRIV(is_newline)(uint32_t chr);
 
 typedef struct {
     /* Lower 24 bit: free to use, higher 8 bit: length.
@@ -261,12 +264,12 @@ typedef struct {
 #include "unicode_gen_inl.h"
 
 /* Property description: 8 bit: type, 6 bit: cathegory type, 6 bit: cathegory length */
-#define REPAN_U_CATHEGORY 0x100000
-#define REPAN_U_SCRIPT 0x200000
+#define REPAN_U_PROPERTY 0x100000
+#define REPAN_U_CATHEGORY 0x200000
+#define REPAN_U_SCRIPT 0x400000
 
 #define REPAN_U_PROPERTY_TYPE_MASK 0xff
-#define REPAN_U_GET_CATHEGORY_TYPE(data) ((data >> 8) & 0x3f)
-#define REPAN_U_GET_CATHEGORY_LENGTH(data) ((data >> 14) & 0x3f)
+#define REPAN_U_GET_PROPERTY(data) ((data >> 8) & 0xfff)
 
 #define REPAN_US_UNKNOWN 0xff
 
@@ -279,6 +282,23 @@ REPAN_NEG_U_PROPERTY_CLASS
 
 extern const repan_string_list_item REPAN_PRIV(u_properties)[];
 uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length);
-const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t value);
+const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr);
+
+/* The property map contains information about Unicode Properties.
+   The start offset of each property is defined as a REPAN_UP_*
+   constant, e.g. REPAN_UP_ID_START. The first uint32 value of each
+   map is a general cathegory bitset (REPAN_UC_Lu is bit 0,
+   REPAN_UC_Ll is  bit 1, ...) which shows whether the characters of
+   a cathegory should be included or excluded. There are exceptions
+   though, and the exceptions are described as ordered list of ranges.
+   The first list is the exclude list: it contains those characters
+   which should be excluded even though their general cathegory is
+   included. The second list called exclude list is the opposite:
+   it contains those characters which should be included even though
+   their general cathegory is excluded.
+*/
+extern const uint32_t REPAN_PRIV(u_property_map)[];
+
+int REPAN_PRIV(u_match_property)(uint32_t chr, uint32_t property);
 
 #endif /* REPAN_LITERAL_H */

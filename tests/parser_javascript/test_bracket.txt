@@ -8,3 +8,24 @@
 
 /(?<name>ab)cd\k<name>/J
     print
+
+/(?<Aab\u0063>def)\k<\u0041abc>/J
+    print
+
+/(?<>def)/J
+    print
+
+/\k<#>/J
+    print
+
+/(?<\u0030>def)/J
+    print
+
+/(?<a\u30>def)/J
+    print
+
+/(?<\u{2dde}>)(?<\u{2e2f}>)/16uJ
+    print
+
+/(?<\u{2d000}>)(?<a\u{2e2f}>)/16uJ
+    print

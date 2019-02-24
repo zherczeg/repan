@@ -12,3 +12,37 @@
 /(?<name>ab)cd\k<name>/J
     print
     /(?<name>ab)cd\g{name}/
+
+/(?<Aab\u0063>def)\k<\u0041abc>/J
+    print
+    /(?<Aabc>def)\g{Aabc}/
+
+/(?<>def)/J
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /(?<[ HERE ]>>>def)/
+
+/\k<#>/J
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /\k<[ HERE ]>>#>/
+
+/(?<\u0030>def)/J
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /(?<[ HERE ]>>\u0030>def)/
+
+/(?<a\u30>def)/J
+    print
+    Pattern parse failed: Four hexadecimal digits are required after \u
+        /(?<a[ HERE ]>>\u30>def)/
+
+/(?<\u{2dde}>)(?<\u{2e2f}>)/16uJ
+    print
+    Pattern parse failed: A valid capturing group name is expected
+        /(?<\u{2dde}>)(?<[ HERE ]>>\u{2e2f}>)/
+
+/(?<\u{2d000}>)(?<a\u{2e2f}>)/16uJ
+    print
+    Pattern parse failed: A greater than sign (>) is expected
+        /(?<\u{2d000}>)(?<a[ HERE ]>>\u{2e2f}>)/

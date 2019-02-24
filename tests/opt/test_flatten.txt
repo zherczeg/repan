@@ -17,3 +17,6 @@
 
 /(?:ab(?i)(?:c(?s:.))de)|(?i:f)/
     flatten, print
+
+/(ab)(?n:(cd)(ef))(gh)/
+    flatten, print

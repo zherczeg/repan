@@ -67,9 +67,34 @@
     Pattern parse failed: Unknown option in (?...) option list
         /a(?i[ HERE ]>>X/
 
+# Non-capturing group
+
 /(?n)(ab)(?<name>cd)(ef)\1/
     print
     /(?:ab)(?<name>cd)(?:ef)\g{1}/
+
+/(ab)(?n:(cd)(ef))(gh)/
+    print
+    /(ab)(?:(?:cd)(?:ef))(gh)/
+
+# Extended regexp
+
+/(?x)   a
+  b	\   c
+   # comment
+   d
+   ### comment ###/
+    print
+    /ab cd/
+
+/(?xx)[ a b	c \  d]/
+    print
+    /[abc d]/
+
+/a  (?x:  b	c   d)  e/
+    print
+    /a  (?:bcd)  e/
+
 
 # Other types of brackets except conditional brackets
 

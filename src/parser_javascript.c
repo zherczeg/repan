@@ -75,34 +75,6 @@ static uint32_t parse_decimal(uint32_t **pattern_ref)
     return decimal;
 }
 
-static repan_string *parse_add_name_reference(repan_parser_context *context, uint32_t *start, size_t length)
-{
-    repan_string *name = REPAN_PRIV(string_add)(&context->result->bracket_names, start, length, &context->error);
-
-    if (name == NULL) {
-        return NULL;
-    }
-
-    if ((name->length_and_flags & (REPAN_STRING_DEFINED | REPAN_STRING_REFERENCED)) == 0) {
-        /* A new, not yet defined string. */
-        repan_undefined_name *undefined_name = REPAN_ALLOC(repan_undefined_name, context->result);
-
-        if (undefined_name == NULL) {
-            context->error = REPAN_ERR_NO_MEMORY;
-            return NULL;
-        }
-
-        undefined_name->next = context->undefined_names;
-        undefined_name->start = context->pattern;
-        undefined_name->name = name;
-
-        context->undefined_names = undefined_name;
-    }
-
-    name->length_and_flags |= REPAN_STRING_REFERENCED;
-    return name;
-}
-
 #include "parser_javascript_char_inl.c"
 
 static int parse_repeat(repan_parser_context *context, repan_parser_locals *locals, uint32_t current_char)
@@ -307,37 +279,17 @@ enum {
 
 static void parse_group_name(repan_parser_context *context, repan_parser_locals *locals)
 {
-    uint32_t *pattern = context->pattern;
     repan_string *name;
 
     ((repan_ext_bracket_node*)locals->current.bracket_node)->u.name = NULL;
 
-    if (*pattern == REPAN_CHAR_GREATER_THAN_SIGN
-            || REPAN_IS_DECIMAL_DIGIT(*pattern)) {
-        context->error = REPAN_ERR_NAME_EXPECTED;
-        return;
-    }
-
-    while (REPAN_PRIV(is_word_char)(*pattern)) {
-        pattern++;
-    }
-
-    if (*pattern != REPAN_CHAR_GREATER_THAN_SIGN) {
-        context->error = REPAN_ERR_GREATER_THAN_SIGN_EXPECTED;
-        context->pattern = pattern;
-        return;
-    }
-
-    name = REPAN_PRIV(string_add)(&context->result->bracket_names,
-        context->pattern, (size_t)(pattern - context->pattern), &context->error);
+    name = parse_name(context, locals);
 
     if (name == NULL) {
         return;
     }
 
     name->length_and_flags |= REPAN_STRING_DEFINED;
-
-    context->pattern = pattern + 1;
     ((repan_ext_bracket_node*)locals->current.bracket_node)->u.name = name;
 }
 

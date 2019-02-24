@@ -78,48 +78,239 @@ static uint32_t parse_oct(repan_parser_context *context, int max_chars)
     return value;
 }
 
-static void parse_reference(repan_parser_context *context, repan_parser_locals *locals)
+static uint32_t parse_unicode_escape(repan_parser_context *context, repan_parser_locals *locals)
+{
+    uint32_t result;
+    uint32_t *start = context->pattern - 2;
+    uint32_t *pattern;
+
+    REPAN_ASSERT(context->pattern[-1] == REPAN_CHAR_u);
+
+    if (*context->pattern == REPAN_CHAR_LEFT_BRACE) {
+        context->pattern++;
+
+        pattern = context->pattern;
+
+        while (*context->pattern == REPAN_CHAR_0) {
+            context->pattern++;
+        }
+
+        result = parse_hex(context, 8);
+
+        if (pattern == context->pattern) {
+            context->error = REPAN_ERR_HEXADECIMAL_NUMBER_REQUIRED;
+            return 0;
+        }
+
+        if (*context->pattern != REPAN_CHAR_RIGHT_BRACE) {
+            context->error = REPAN_ERR_RIGHT_BRACE_EXPECTED;
+            context->pattern = start;
+            return 0;
+        }
+
+        context->pattern++;
+    }
+    else {
+        result = parse_hex(context, 4);
+
+        if (result == UINT32_MAX) {
+            return REPAN_CHAR_u;
+        }
+
+        if ((context->options & REPAN_PARSE_UTF) && (result >= 0xd800 && result < 0xdc00)
+                && context->pattern[0] == REPAN_CHAR_BACKSLASH && context->pattern[1] == REPAN_CHAR_u) {
+            uint32_t low_surrogate;
+
+            start = context->pattern;
+            context->pattern += 2;
+            low_surrogate = parse_hex(context, 4);
+
+            if (low_surrogate >= 0xdc00 && low_surrogate < 0xe000) {
+                result = (((result & 0x3ff) << 10) | (low_surrogate & 0x3ff)) + 0x10000;
+            }
+            else {
+                context->pattern = start;
+                start -= 6;
+            }
+        }
+    }
+
+    if (result > context->char_max) {
+        context->error = REPAN_ERR_TOO_LARGE_CHARACTER;
+        context->pattern = start;
+        return 0;
+    }
+
+    if ((context->options & REPAN_PARSE_UTF) && (result >= 0xd800 && result < 0xe000)) {
+        context->error = REPAN_ERR_INVALID_UTF_CHAR;
+        context->pattern = start;
+        return 0;
+    }
+
+    return result;
+}
+
+static repan_string *parse_name(repan_parser_context *context, repan_parser_locals *locals)
 {
     uint32_t *pattern = context->pattern;
+    uint32_t *start = context->pattern;
+    uint32_t *string;
+    uint32_t chr;
+    repan_string *name;
+    size_t length = 0;
+    int first_char = REPAN_TRUE;
+
+    REPAN_ASSERT(pattern[-1] == REPAN_CHAR_LESS_THAN_SIGN);
+
+    while (REPAN_TRUE) {
+        uint32_t *chr_start = pattern;
+
+        if (*pattern == REPAN_CHAR_GREATER_THAN_SIGN) {
+            break;
+        }
+
+        if (pattern[0] == REPAN_CHAR_BACKSLASH && pattern[1] == REPAN_CHAR_u) {
+            pattern += 2;
+            context->pattern = pattern;
+
+            chr = parse_unicode_escape(context, locals);
+            if (context->error != REPAN_SUCCESS) {
+                return NULL;
+            }
+            if (context->pattern == pattern) {
+                context->error = REPAN_ERR_INVALID_U_SEQUENCE;
+                context->pattern -= 2;
+                return NULL;
+            }
+            pattern = context->pattern;
+        }
+        else {
+            chr = *pattern++;
+        }
+
+        if (first_char) {
+            first_char = REPAN_FALSE;
+            length++;
+
+            if (context->options & REPAN_PARSE_UTF) {
+                if (REPAN_PRIV(u_match_property)(chr, REPAN_UP_ID_START)) {
+                    continue;
+                }
+            }
+            else if (!REPAN_IS_DECIMAL_DIGIT(chr) && REPAN_PRIV(is_word_char)(chr)) {
+                continue;
+            }
+
+            context->error = REPAN_ERR_NAME_EXPECTED;
+            context->pattern = chr_start;
+            return NULL;
+        }
+
+        length++;
+
+        if (context->options & REPAN_PARSE_UTF) {
+            if (REPAN_PRIV(u_match_property)(chr, REPAN_UP_ID_CONTINUE)) {
+                continue;
+            }
+        }
+        else if (REPAN_PRIV(is_word_char)(chr)) {
+            continue;
+        }
+
+        context->error = REPAN_ERR_GREATER_THAN_SIGN_EXPECTED;
+        context->pattern = chr_start;
+        return NULL;
+    }
+
+    if (first_char) {
+        context->error = REPAN_ERR_NAME_EXPECTED;
+        context->pattern = start;
+        return NULL;
+    }
+
+    if (length >= REPAN_RESOURCE_MAX) {
+        context->error = REPAN_ERR_LENGTH_LIMIT;
+        context->pattern = start;
+        return NULL;
+    }
+
+    if (length == pattern - start) {
+        /* No \u escape sequence was encountered. */
+        context->pattern = pattern + 1;
+        return REPAN_PRIV(string_add)(&context->result->bracket_names, start, length, &context->error);
+    }
+
+    string = (uint32_t*)malloc(length * sizeof(uint32_t));
+    pattern = start;
+    start = string;
+
+    while (REPAN_TRUE) {
+        if (*pattern == REPAN_CHAR_GREATER_THAN_SIGN) {
+            break;
+        }
+
+        if (pattern[0] == REPAN_CHAR_BACKSLASH && pattern[1] == REPAN_CHAR_u) {
+            pattern += 2;
+            context->pattern = pattern;
+
+            *string++ = parse_unicode_escape(context, locals);
+            REPAN_ASSERT(context->error == REPAN_SUCCESS && pattern < context->pattern);
+
+            pattern = context->pattern;
+            continue;
+        }
+
+        *string++ = *pattern++;
+    }
+
+    REPAN_ASSERT(string - start == length);
+
+    name = REPAN_PRIV(string_add)(&context->result->bracket_names, start, length, &context->error);
+
+    free(start);
+    context->pattern = pattern + 1;
+    return name;
+}
+
+static void parse_reference(repan_parser_context *context, repan_parser_locals *locals)
+{
+    uint32_t *start;
     repan_string *name = NULL;
     repan_reference_node *reference_node;
 
-    REPAN_ASSERT(pattern[-1] == REPAN_CHAR_k);
+    REPAN_ASSERT(context->pattern[-1] == REPAN_CHAR_k);
 
-    if (*pattern != REPAN_CHAR_LESS_THAN_SIGN) {
+    if (*context->pattern != REPAN_CHAR_LESS_THAN_SIGN) {
         return;
     }
 
-    pattern++;
-    context->pattern = pattern;
+    context->pattern++;
+    start = context->pattern;
 
-    if (REPAN_IS_DECIMAL_DIGIT(*pattern)) {
-        context->error = REPAN_ERR_NAME_EXPECTED;
-        return;
-    }
-
-    while (REPAN_PRIV(is_word_char)(*pattern)) {
-        pattern++;
-    }
-
-    if (pattern == context->pattern) {
-        context->error = REPAN_ERR_NAME_EXPECTED;
-        return;
-    }
-
-    if (*pattern != REPAN_CHAR_GREATER_THAN_SIGN) {
-        context->error = REPAN_ERR_GREATER_THAN_SIGN_EXPECTED;
-        context->pattern = pattern;
-        return;
-    }
-
-    name = parse_add_name_reference(context, context->pattern, (size_t)(pattern - context->pattern));
+    name = parse_name(context, locals);
 
     if (name == NULL) {
         return;
     }
 
-    pattern++;
+    if ((name->length_and_flags & (REPAN_STRING_DEFINED | REPAN_STRING_REFERENCED)) == 0) {
+        /* A new, not yet defined string. */
+        repan_undefined_name *undefined_name = REPAN_ALLOC(repan_undefined_name, context->result);
+
+        if (undefined_name == NULL) {
+            context->error = REPAN_ERR_NO_MEMORY;
+            return;
+        }
+
+        undefined_name->next = context->undefined_names;
+        undefined_name->start = start;
+        undefined_name->name = name;
+
+        context->undefined_names = undefined_name;
+    }
+
+    name->length_and_flags |= REPAN_STRING_REFERENCED;
+
     reference_node = REPAN_ALLOC(repan_reference_node, context->result);
 
     if (reference_node == NULL) {
@@ -134,8 +325,6 @@ static void parse_reference(repan_parser_context *context, repan_parser_locals *
     locals->prev_node = (repan_prev_node*)locals->last_node;
     locals->last_node->next_node = (repan_node*)reference_node;
     locals->last_node = (repan_node*)reference_node;
-
-    context->pattern = pattern;
     return;
 }
 
@@ -213,78 +402,6 @@ static int parse_may_backref(repan_parser_context *context, repan_parser_locals 
 
     context->pattern = pattern;
     return REPAN_TRUE;
-}
-
-static uint32_t parse_unicode_escape(repan_parser_context *context, repan_parser_locals *locals)
-{
-    uint32_t result;
-    uint32_t *start = context->pattern - 2;
-    uint32_t *pattern;
-
-    REPAN_ASSERT(context->pattern[-1] == REPAN_CHAR_u);
-
-    if (*context->pattern == REPAN_CHAR_LEFT_BRACE) {
-        context->pattern++;
-
-        pattern = context->pattern;
-
-        while (*context->pattern == REPAN_CHAR_0) {
-            context->pattern++;
-        }
-
-        result = parse_hex(context, 8);
-
-        if (pattern == context->pattern) {
-            context->error = REPAN_ERR_HEXADECIMAL_NUMBER_REQUIRED;
-            return 0;
-        }
-
-        if (*context->pattern != REPAN_CHAR_RIGHT_BRACE) {
-            context->error = REPAN_ERR_RIGHT_BRACE_EXPECTED;
-            context->pattern = start;
-            return 0;
-        }
-
-        context->pattern++;
-    }
-    else {
-        result = parse_hex(context, 4);
-
-        if (result == UINT32_MAX) {
-            return REPAN_CHAR_u;
-        }
-
-        if ((context->options & REPAN_PARSE_UTF) && (result >= 0xd800 && result < 0xdc00)
-                && context->pattern[0] == REPAN_CHAR_BACKSLASH && context->pattern[1] == REPAN_CHAR_u) {
-            uint32_t low_surrogate;
-
-            start = context->pattern;
-            context->pattern += 2;
-            low_surrogate = parse_hex(context, 4);
-
-            if (low_surrogate >= 0xdc00 && low_surrogate < 0xe000) {
-                result = (((result & 0x3ff) << 10) | (low_surrogate & 0x3ff)) + 0x10000;
-            }
-            else {
-                context->pattern = start;
-                start -= 6;
-            }
-        }
-    }
-
-    if (result > context->char_max) {
-        context->error = REPAN_ERR_TOO_LARGE_CHARACTER;
-        context->pattern = start;
-        return 0;
-    }
-
-    if ((context->options & REPAN_PARSE_UTF) && (result >= 0xd800 && result < 0xe000)) {
-        context->error = REPAN_ERR_INVALID_UTF_CHAR;
-        context->pattern = start;
-        return 0;
-    }
-
-    return result;
 }
 
 static void parse_character(repan_parser_context *context, repan_parser_locals *locals, uint32_t current_char)

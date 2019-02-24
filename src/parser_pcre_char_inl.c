@@ -559,6 +559,25 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
 
     context->pattern++;
 
+    if (locals->current.modifiers & REPAN_MODIFIER_EXTENDED_MORE) {
+        if (REPAN_PRIV(is_space)(current_char)) {
+            while(REPAN_PRIV(is_space)(*context->pattern)) {
+                context->pattern++;
+            }
+            return;
+        }
+        if (current_char == REPAN_CHAR_HASHMARK) {
+            uint32_t *pattern = context->pattern;
+            uint32_t *pattern_end = context->pattern_end;
+
+            while (pattern < pattern_end && !REPAN_PRIV(is_newline)(*pattern)) {
+                pattern++;
+            }
+            context->pattern = pattern;
+            return;
+        }
+    }
+
     switch (current_char) {
     case REPAN_CHAR_BACKSLASH:
         current_char = *context->pattern++;
@@ -1020,6 +1039,10 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
                 node_type = (data & REPAN_POSIX_OPT_IS_PERL) ? REPAN_PERL_CLASS_NODE : REPAN_POSIX_CLASS_NODE;
                 node_sub_type = (uint8_t)data;
             }
+        }
+        else if ((locals->current.modifiers & REPAN_MODIFIER_EXTENDED_MORE)
+                && (current_char == REPAN_CHAR_SPACE || current_char == REPAN_ESC_t)) {
+            continue;
         }
 
         size = (node_type == REPAN_CHAR_NODE) ? sizeof(repan_char_node) : sizeof(repan_node);

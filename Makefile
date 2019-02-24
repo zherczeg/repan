@@ -20,7 +20,7 @@ TOOLS_SRCDIR = src-tools
 
 OBJS = $(addprefix $(OUTDIR)/, alloc.o literal.o nodes.o opt_uncapture.o \
 			opt_flatten.o parser_decode.o parser_javascript.o parser_pcre.o \
-			to_string.o to_string_char.o util.o)
+			to_string.o to_string_char.o unicode_gen.o util.o)
 TEST_OBJS = $(addprefix $(OUTDIR)/, repan-test.o)
 
 all: $(OUTDIR) $(OUTDIR)/$(TARGET) $(OUTDIR)/$(TEST_TARGET)

@@ -23,3 +23,7 @@
 /(?:ab(?i)(?:c(?s:.))de)|(?i:f)/
     flatten, print
     /(?:ab(?i)c(?s:.)de)|(?i:f)/
+
+/(ab)(?n:(cd)(ef))(gh)/
+    flatten, print
+    /(ab)cdef(gh)/
