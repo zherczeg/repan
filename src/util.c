@@ -83,6 +83,8 @@ const char *repan_get_error_message(uint32_t error)
         return "Referenced capturing bracket is non-existing";
     case REPAN_ERR_NAME_EXPECTED:
         return "A valid capturing group name is expected";
+    case REPAN_ERR_INVALID_NAME_CHAR:
+        return "A character allowed in capturing group names is expected";
     case REPAN_ERR_ESCAPE_NOT_ALLOWED_IN_CLASS:
         return "Escaping ascii letters is not allowed in character class";
     case REPAN_ERR_INVALID_RANGE:
@@ -121,6 +123,8 @@ const char *repan_get_error_message(uint32_t error)
         return "Unterminated \\Q...\\E sequence";
     case REPAN_ERR_UNTERMINATED_COMMENT:
         return "Unterminated comment";
+    case REPAN_ERR_GLOB_INVALID_ASTERISK:
+        return "A ** wildchard must be at the start or end of a pttern, or surrounded by directory separators";
     default:
         return "Unknown error code";
     }

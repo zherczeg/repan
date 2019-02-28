@@ -1,0 +1,46 @@
+# Converting posix globs to regular expressions.
+
+"*.txt"G
+    print
+
+"*txt"G
+    print
+
+"*"G
+    print
+
+"a*b*c*d"G
+    print
+
+"a*b*/c*d*/e*f*"G
+    print
+
+"ab*?*?*?c*?.txt"G
+    print
+
+"ab*cd?ef*?*?gh"G
+    print
+
+"ab/*cd/?ef/*?*?gh/??ij/"G
+    print
+
+"ab/cd*/ef?/gh*?*?/ij??/"G
+    print
+
+"ab/*/cd"G
+    print
+
+"ab/**/cd"G
+    print
+
+"**/*.txt"G
+    print
+
+"ab/**"G
+    print
+
+"**"G
+    print
+
+"a*b*c/**/c*d*e"G
+    print

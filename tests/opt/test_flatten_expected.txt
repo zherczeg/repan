@@ -16,13 +16,13 @@
     flatten, print
     /abcd/
 
-/a(?:(?s:(?:).))b/
+/a(?:(?s:(?^:.)(?ims:).))b./
     flatten, print
-    /a(?s:.)b/
+    /a.(?s).b(?-s)./
 
-/(?:ab(?i)(?:c(?s:.))de)|(?i:f)/
+/(?:ab(?i)(?:c(?s:.))de)|(?i:f)(?-ims:g)/
     flatten, print
-    /(?:ab(?i)c(?s:.)de)|(?i:f)/
+    /ab(?i)c(?s).de|f(?-i)g/
 
 /(ab)(?n:(cd)(ef))(gh)/
     flatten, print

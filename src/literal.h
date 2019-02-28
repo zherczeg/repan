@@ -145,9 +145,9 @@
 #define REPAN_IS_LOWERCASE_LATIN(chr) \
     ((chr) >= REPAN_CHAR_a && (chr) <= REPAN_CHAR_z)
 
-int REPAN_PRIV(is_word_char)(uint32_t chr);
-int REPAN_PRIV(is_space)(uint32_t chr);
-int REPAN_PRIV(is_newline)(uint32_t chr);
+int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr);
+int REPAN_PRIV(is_space)(repan_pattern *pattern, uint32_t chr);
+int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr);
 
 typedef struct {
     /* Lower 24 bit: free to use, higher 8 bit: length.

@@ -40,7 +40,6 @@ enum {
 
     REPAN_DOT_NODE,
     REPAN_NEWLINE_NODE,
-    REPAN_NO_NEWLINE_NODE,
     REPAN_GRAPHEME_CLUSTER_NODE,
     REPAN_CODE_UNIT_NODE,
 
@@ -67,7 +66,6 @@ enum {
     REPAN_VERB_NODE,
     REPAN_VERB_WITH_ARGUMENT_NODE,
     REPAN_SET_MATCH_START_NODE,
-    REPAN_MODIFIER_NODE,
 
     REPAN_LAST_NODE_INDEX
 };
@@ -114,15 +112,15 @@ typedef struct repan_node_struct {
     REPAN_NODE_HEADER;
 } repan_node;
 
-typedef struct repan_alt_node_struct {
-    repan_node *next_node;
-    struct repan_alt_node_struct *next_alt_node;
-} repan_alt_node;
-
 /* This type is compatible with both repan_node and repan_alt_node. */
 typedef struct {
     repan_node *next_node;
 } repan_prev_node;
+
+typedef struct repan_alt_node_struct {
+    repan_node *next_node;
+    struct repan_alt_node_struct *next_alt_node;
+} repan_alt_node;
 
 typedef struct {
     REPAN_NODE_HEADER;
@@ -143,16 +141,19 @@ typedef struct {
 
 typedef struct {
     REPAN_NODE_HEADER;
+    uint8_t caseless;
     uint32_t chr;
 } repan_char_node;
 
 typedef struct {
     REPAN_NODE_HEADER;
+    uint8_t caseless;
     uint32_t chrs[2];
 } repan_char_range_node;
 
 typedef struct {
     REPAN_NODE_HEADER;
+    uint8_t caseless;
     repan_prev_node node_list;
 } repan_char_class_node;
 
@@ -192,6 +193,7 @@ struct repan_pattern_struct {
     repan_bracket_node *bracket_node;
     repan_string *bracket_names;
     repan_string *verb_arguments;
+    uint32_t options;
     uint32_t capture_count;
 
     repan_block *blocks[REPAN_RESERVED_BLOCK_COUNT];
@@ -203,21 +205,21 @@ struct repan_pattern_struct {
 /* m */
 #define REPAN_MODIFIER_MULTILINE 0x2
 /* s */
-#define REPAN_MODIFIER_DOTALL 0x4
+#define REPAN_MODIFIER_DOT_ANY 0x4
 
-#define REPAN_GENERIC_MODIFIER_MASK (REPAN_MODIFIER_CASELESS \
-    | REPAN_MODIFIER_MULTILINE | REPAN_MODIFIER_DOTALL)
+/* Other options. */
+#define REPAN_MODE_UTF 0x8
 
 /* Parser only modifiers. */
 /* n */
 #define REPAN_MODIFIER_NO_AUTOCAPTURE 0x8
 /* x */
-#define REPAN_MODIFIER_EXTENDED 0x8
+#define REPAN_MODIFIER_EXTENDED 0x10
 /* xx */
-#define REPAN_MODIFIER_EXTENDED_MORE (0x10 | REPAN_MODIFIER_EXTENDED)
+#define REPAN_MODIFIER_EXTENDED_MORE (0x20 | REPAN_MODIFIER_EXTENDED)
 
 /* To string only modifiers. */
-#define REPAN_MODIFIER_HIDE_BRACKET REPAN_MODIFIER_NO_AUTOCAPTURE
+#define REPAN_MODIFIER_HIDE_BRACKET 0x8
 
 extern const uint8_t REPAN_PRIV(perl_class_list)[];
 extern const uint8_t REPAN_PRIV(modifier_list)[];

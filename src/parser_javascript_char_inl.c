@@ -197,7 +197,7 @@ static repan_string *parse_name(repan_parser_context *context, repan_parser_loca
                     continue;
                 }
             }
-            else if (!REPAN_IS_DECIMAL_DIGIT(chr) && REPAN_PRIV(is_word_char)(chr)) {
+            else if (!REPAN_IS_DECIMAL_DIGIT(chr) && REPAN_PRIV(is_word_char)(context->result, chr)) {
                 continue;
             }
 
@@ -213,11 +213,11 @@ static repan_string *parse_name(repan_parser_context *context, repan_parser_loca
                 continue;
             }
         }
-        else if (REPAN_PRIV(is_word_char)(chr)) {
+        else if (REPAN_PRIV(is_word_char)(context->result, chr)) {
             continue;
         }
 
-        context->error = REPAN_ERR_GREATER_THAN_SIGN_EXPECTED;
+        context->error = REPAN_ERR_INVALID_NAME_CHAR;
         context->pattern = chr_start;
         return NULL;
     }
@@ -521,12 +521,15 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
         break;
     case REPAN_CHAR_CIRCUMFLEX_ACCENT:
         node_type = REPAN_ASSERT_CIRCUMFLEX_NODE;
+        node_sub_type = REPAN_FALSE;
         break;
     case REPAN_CHAR_DOLLAR:
         node_type = REPAN_ASSERT_DOLLAR_NODE;
+        node_sub_type = REPAN_FALSE;
         break;
     case REPAN_CHAR_DOT:
         node_type = REPAN_DOT_NODE;
+        node_sub_type = REPAN_FALSE;
         break;
     }
 
@@ -546,6 +549,7 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
     if (node_type == REPAN_CHAR_NODE) {
         repan_char_node *char_node = (repan_char_node*)node;
 
+        char_node->caseless = REPAN_FALSE;
         char_node->chr = current_char;
     }
 
@@ -565,6 +569,7 @@ static repan_prev_node *parse_range_add_char(repan_parser_context *context, repa
 
     char_node->next_node = NULL;
     char_node->type = REPAN_CHAR_NODE;
+    char_node->caseless = REPAN_FALSE;
     char_node->chr = chr;
 
     prev_node->next_node = (repan_node*)char_node;
@@ -594,6 +599,7 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
     char_class_node->next_node = NULL;
     char_class_node->type = REPAN_CHAR_CLASS_NODE;
     char_class_node->sub_type = REPAN_NORMAL_CLASS;
+    char_class_node->caseless = REPAN_FALSE;
     char_class_node->node_list.next_node = NULL;
 
     locals->last_node->next_node = (repan_node*)char_class_node;
@@ -792,11 +798,13 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
         if (node_type == REPAN_CHAR_NODE) {
             repan_char_node *char_node = (repan_char_node*)node;
 
+            char_node->caseless = REPAN_FALSE;
             char_node->chr = current_char;
         }
         else if (node_type == REPAN_CHAR_RANGE_NODE) {
             repan_char_range_node *char_range_node = (repan_char_range_node*)node;
 
+            char_range_node->caseless = REPAN_FALSE;
             char_range_node->chrs[0] = range_left;
             char_range_node->chrs[1] = current_char;
         }

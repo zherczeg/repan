@@ -1,46 +1,54 @@
 # Testing bracket types.
 
-# Modifiers (i, m, s needs to be kept, the rest affects parse time only)
+# Modifiers
 
-/(?imsxn)ab(?-imsxn)c/
+/(?imsxn)a.^(?-imsxn)b.$/
     print
-    /(?ims)ab(?-ims)c/
+    /(?i)a(?s).(?m)^(?-i)b(?-s).(?-m)$/
 
-/(?s)(?m)(?i)abc/
+/(?s)(?m)(?i)abc./
     print
-    /(?ims)abc/
+    /(?i)abc(?s)./
 
-/(?xixmim)ab(?mmm-mmmsss)c/
+/(?xixmim)ab(?mmm-mmmsss)c$/
     print
-    /(?im)ab(?-m)c/
+    /(?i)abc$/
 
-/(?xxmxi)ab(?sss-sss)c/
+/(?xxmxi)ab(?sss-sss)c./
     print
-    /(?im)abc/
+    /(?i)abc./
 
 /(?:(?s)a.b)/
     print
-    /(?s:a.b)/
+    /(?:a(?s).b)/
 
-/(?i:(?m)(?s)(?-i)a.b)/
+/(?i:(?m)(?s)a(?-i).b)/
     print
-    /(?ms:a.b)/
+    /(?:(?i)a(?s).(?-i)b)/
 
 /(?ims)a(?^)b(?i)c(?^i)d(?n)e/
     print
-    /(?ims)a(?-ims)b(?i)cde/
+    /(?i)a(?-i)b(?i)cde/
+
+/(?s:.)./
+    print
+    /(?s).(?-s)./
+
+/(?s).\N./
+     print
+    /(?s).(?-s).(?s)./
 
 /(?ims:a(?^:b)c(?^)d(?^:ee)f(?m:gg(?m:hh)))i/
     print
-    /(?ims:a(?-ims:b)c(?-ims)d(?:ee)f(?m:gg(?:hh)))i/
+    /(?:(?i)a(?-i)b(?i)c(?-i)d(?:ee)f(?:gg(?:hh)))i/
 
 /(?m:a(?i-m:b)c(?-im)d)/
     print
-    /(?m:a(?i-m:b)c(?-m)d)/
+    /(?:a(?i)b(?-i)cd)/
 
 /(?i:a(?m:b)c(?-m)d)/
     print
-    /(?i:a(?m:b)cd)/
+    /(?:(?i)abcd)/
 
 /(?i-m-m:a)/
     print

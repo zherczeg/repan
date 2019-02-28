@@ -14,7 +14,11 @@
 
 /[].[^]/J
     print
-    /(*FAIL).\p{Any}/
+    /(*FAIL).(?s)./
+
+/.[^]./J
+     print
+    /.(?s).(?-s)./
 
 # Test character ranges
 

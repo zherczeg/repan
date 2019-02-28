@@ -26,27 +26,42 @@
 
 #include "internal.h"
 
-int REPAN_PRIV(is_word_char)(uint32_t chr)
+int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr)
 {
+    if (chr == REPAN_CHAR_UNDERSCORE) {
+        return REPAN_TRUE;
+    }
+
+    if (pattern->options & REPAN_MODE_UTF) {
+        const repan_u_codepoint *codepoint = REPAN_PRIV(u_get_codepoint)(chr);
+
+        return (codepoint->cathegory >= REPAN_UC_Lu && codepoint->cathegory <= REPAN_UC_Lo)
+             || codepoint->cathegory == REPAN_UC_Nd;
+    }
+
     if (REPAN_IS_DECIMAL_DIGIT(chr)) {
         return REPAN_TRUE;
     }
 
-    if ((chr | 0x20) >= REPAN_CHAR_a && (chr | 0x20) <= REPAN_CHAR_z) {
+    return ((chr | 0x20) >= REPAN_CHAR_a && (chr | 0x20) <= REPAN_CHAR_z);
+}
+
+int REPAN_PRIV(is_space)(repan_pattern *pattern, uint32_t chr)
+{
+    return (chr == ' ' || chr == '\t') || REPAN_PRIV(is_newline)(pattern, chr);
+}
+
+int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr)
+{
+    if ((chr >= 0x0a && chr <= 0x0d) || chr == 0x85) {
         return REPAN_TRUE;
     }
 
-    return (chr == '_');
-}
+    if (pattern->options & REPAN_MODE_UTF) {
+        return (chr | 0x1) == 0x2029;
+    }
 
-int REPAN_PRIV(is_space)(uint32_t chr)
-{
-    return (chr == ' ' || chr == '\t') || REPAN_PRIV(is_newline)(chr);
-}
-
-int REPAN_PRIV(is_newline)(uint32_t chr)
-{
-    return (chr == '\r' || chr == '\n');
+    return REPAN_FALSE;
 }
 
 static uint32_t find_list_item(const repan_string_list_item *items, size_t number_of_items,

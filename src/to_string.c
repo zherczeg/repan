@@ -33,6 +33,9 @@ typedef struct {
     uint32_t modifiers;
 } repan_to_string_saved_bracket;
 
+#define UPDATE_MODIFIER(modifier, is_set) \
+    current.modifiers = to_string_modifier(context, current.modifiers, REPAN_MODIFIER_ ## modifier, is_set)
+
 static void to_string_decimal(repan_to_string_context *context, uint32_t num)
 {
     /* Largest uint32 number is 4294967296 */
@@ -139,33 +142,42 @@ static void to_string_posix_class(repan_to_string_context *context, uint32_t typ
     context->write(context, REPAN_CHAR_RIGHT_SQUARE_BRACKET);
 }
 
-static void to_string_modifiers(repan_to_string_context *context, uint32_t old_modifiers, uint32_t new_modifiers)
+static uint32_t to_string_modifier(repan_to_string_context *context, uint32_t modifiers,
+    uint32_t new_modifier, int set_modifier)
 {
     int index;
-    uint32_t modifiers;
 
-    modifiers = new_modifiers & ~old_modifiers;
+    REPAN_ASSERT((new_modifier & (new_modifier - 1)) == 0);
 
-    while (REPAN_TRUE) {
-        index = 0;
-
-        while (modifiers != 0) {
-            if ((modifiers & 0x1) != 0) {
-                context->write(context, REPAN_PRIV(modifier_list)[index]);
-            }
-
-            index++;
-            modifiers >>= 1;
+    if (set_modifier) {
+        if ((modifiers & new_modifier) != 0) {
+            return modifiers;
         }
-
-        modifiers = old_modifiers & ~new_modifiers;
-        if (modifiers == 0) {
-            return;
-        }
-
-        context->write(context, REPAN_CHAR_MINUS);
-        old_modifiers = 0;
+        modifiers |= new_modifier;
     }
+    else {
+        if ((modifiers & new_modifier) == 0) {
+            return modifiers;
+        }
+        modifiers &= ~new_modifier;
+    }
+
+    context->write(context, REPAN_CHAR_LEFT_BRACKET);
+    context->write(context, REPAN_CHAR_QUESTION_MARK);
+
+    if (!set_modifier) {
+        context->write(context, REPAN_CHAR_MINUS);
+    }
+
+    index = 0;
+    while (new_modifier != 1) {
+        index++;
+        new_modifier >>= 1;
+    }
+
+    context->write(context, REPAN_PRIV(modifier_list)[index]);
+    context->write(context, REPAN_CHAR_RIGHT_BRACKET);
+    return modifiers;
 }
 
 static void to_string_class_char(repan_to_string_context *context, uint32_t current_char)
@@ -220,11 +232,6 @@ static void to_string_class_char(repan_to_string_context *context, uint32_t curr
 
 static void to_string_character_class(repan_to_string_context *context, repan_node *node, uint8_t sub_type)
 {
-    if (node == NULL) {
-        to_string_cstring(context, (sub_type == REPAN_NORMAL_CLASS) ? "(*FAIL)" : "\\p{Any}");
-        return;
-    }
-
     context->write(context, REPAN_CHAR_LEFT_SQUARE_BRACKET);
     if (sub_type == REPAN_NEGATED_CLASS) {
         context->write(context, REPAN_CHAR_CIRCUMFLEX_ACCENT);
@@ -273,7 +280,7 @@ static void to_string_character_class(repan_to_string_context *context, repan_no
 }
 
 static void to_string_bracket_type(repan_to_string_context *context,
-    repan_to_string_saved_bracket *current, repan_node **node)
+    repan_to_string_saved_bracket *current)
 {
     repan_bracket_node *bracket_node = current->bracket_node;
     uint32_t type_char;
@@ -308,13 +315,6 @@ static void to_string_bracket_type(repan_to_string_context *context,
 
     switch (bracket_node->sub_type) {
     case REPAN_NON_CAPTURING_BRACKET:
-        if (*node != NULL && (*node)->type == REPAN_MODIFIER_NODE) {
-            uint32_t new_modifiers = ((repan_modifiers_node*)*node)->modifiers;
-
-            to_string_modifiers(context, current->modifiers, new_modifiers);
-            current->modifiers = new_modifiers;
-            *node = (*node)->next_node;
-        }
         type_char = REPAN_CHAR_COLON;
         break;
     case REPAN_NAMED_CAPTURING_BRACKET:
@@ -400,8 +400,10 @@ static void to_string_bracket(repan_to_string_context *context)
 
     while (REPAN_TRUE) {
         if (node != NULL) {
-            uint32_t new_modifiers, current_char;
+            uint32_t current_char;
             uint32_t escape_char = REPAN_CHAR_NUL;
+            repan_char_class_node *char_class_node;
+            repan_node *next_node;
 
             switch (node->type) {
             case REPAN_CHAR_NODE:
@@ -441,6 +443,8 @@ static void to_string_bracket(repan_to_string_context *context)
                 }
 
                 if (escape_char == REPAN_CHAR_NUL) {
+                    UPDATE_MODIFIER(CASELESS, ((repan_char_node*)node)->caseless);
+
                     if ((current_char < 0x20)
                             || (current_char >= 0x7f && (context->options & REPAN_TO_STRING_ASCII))) {
                         to_string_hex(context, current_char);
@@ -460,19 +464,28 @@ static void to_string_bracket(repan_to_string_context *context)
                 break;
 
             case REPAN_CHAR_CLASS_NODE:
-                to_string_character_class(context, ((repan_char_class_node*)node)->node_list.next_node, node->sub_type);
+                char_class_node = (repan_char_class_node*)node;
+                UPDATE_MODIFIER(CASELESS, char_class_node->caseless);
+                next_node = char_class_node->node_list.next_node;
+                if (next_node != NULL) {
+                    to_string_character_class(context, next_node, node->sub_type);
+                }
+                else if (node->sub_type == REPAN_NORMAL_CLASS) {
+                    to_string_cstring(context, "(*FAIL)");
+                }
+                else {
+                    UPDATE_MODIFIER(DOT_ANY, REPAN_TRUE);
+                    context->write(context, REPAN_CHAR_DOT);
+                }
                 break;
 
             case REPAN_DOT_NODE:
+                UPDATE_MODIFIER(DOT_ANY, node->sub_type);
                 context->write(context, REPAN_CHAR_DOT);
                 break;
 
             case REPAN_NEWLINE_NODE:
                 escape_char = REPAN_CHAR_R;
-                break;
-
-            case REPAN_NO_NEWLINE_NODE:
-                escape_char = REPAN_CHAR_N;
                 break;
 
             case REPAN_GRAPHEME_CLUSTER_NODE:
@@ -534,14 +547,16 @@ static void to_string_bracket(repan_to_string_context *context)
                 current.alt_node = &current.bracket_node->alt_node_list;
                 node = current.alt_node->next_node;
 
-                to_string_bracket_type(context, &current, &node);
+                to_string_bracket_type(context, &current);
                 continue;
 
             case REPAN_ASSERT_CIRCUMFLEX_NODE:
+                UPDATE_MODIFIER(MULTILINE, node->sub_type);
                 context->write(context, REPAN_CHAR_CIRCUMFLEX_ACCENT);
                 break;
 
             case REPAN_ASSERT_DOLLAR_NODE:
+                UPDATE_MODIFIER(MULTILINE, node->sub_type);
                 context->write(context, REPAN_CHAR_DOLLAR);
                 break;
 
@@ -594,17 +609,6 @@ static void to_string_bracket(repan_to_string_context *context)
                 escape_char = REPAN_CHAR_K;
                 break;
 
-            case REPAN_MODIFIER_NODE:
-                context->write(context, REPAN_CHAR_LEFT_BRACKET);
-                context->write(context, REPAN_CHAR_QUESTION_MARK);
-
-                new_modifiers = ((repan_modifiers_node*)node)->modifiers;
-                to_string_modifiers(context, current.modifiers, new_modifiers);
-                current.modifiers = new_modifiers;
-
-                context->write(context, REPAN_CHAR_RIGHT_BRACKET);
-                break;
-
             default:
                 REPAN_ASSERT(0);
                 break;
@@ -632,6 +636,10 @@ static void to_string_bracket(repan_to_string_context *context)
 
         if (!(current.modifiers & REPAN_MODIFIER_HIDE_BRACKET)) {
             context->write(context, REPAN_CHAR_RIGHT_BRACKET);
+        }
+        else {
+            uint32_t modifiers = current.modifiers - REPAN_MODIFIER_HIDE_BRACKET;
+            REPAN_STACK_TOP(repan_to_string_saved_bracket, &context->stack).modifiers = modifiers;
         }
 
         it_min = current.bracket_node->it_min;

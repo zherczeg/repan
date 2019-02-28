@@ -12,10 +12,10 @@
 /(?:ab)(?:)(?:(?:))(?:cd)/
     flatten, print
 
-/a(?:(?s:(?:).))b/
+/a(?:(?s:(?^:.)(?ims:).))b./
     flatten, print
 
-/(?:ab(?i)(?:c(?s:.))de)|(?i:f)/
+/(?:ab(?i)(?:c(?s:.))de)|(?i:f)(?-ims:g)/
     flatten, print
 
 /(ab)(?n:(cd)(ef))(gh)/

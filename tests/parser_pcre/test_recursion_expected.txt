@@ -79,7 +79,7 @@
 
 /\g<ab/
     print
-    Pattern parse failed: A greater than sign (>) is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /\g<ab[ HERE ]>>/
 
 /\g''/

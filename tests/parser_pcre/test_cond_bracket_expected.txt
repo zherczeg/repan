@@ -49,12 +49,12 @@
 
 /(?('name)abc)/
     print
-    Pattern parse failed: An apostrophe (') is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /(?('name[ HERE ]>>)abc)/
 
 /(?(<name)abc)/
     print
-    Pattern parse failed: A greater than sign (>) is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /(?(<name[ HERE ]>>)abc)/
 
 /(?('name'abc)/

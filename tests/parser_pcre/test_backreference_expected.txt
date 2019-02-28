@@ -63,7 +63,7 @@
 
 /()\g{a!}/
     print
-    Pattern parse failed: A right brace (}) is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /()\g{a[ HERE ]>>!}/
 
 /(?<name>AA)\k{name}\k<name>\k'name'/
@@ -77,7 +77,7 @@
 
 /\k<A/
     print
-    Pattern parse failed: A greater than sign (>) is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /\k<A[ HERE ]>>/
 
 /\k<>/
@@ -92,12 +92,12 @@
 
 /\k{A/
     print
-    Pattern parse failed: A right brace (}) is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /\k{A[ HERE ]>>/
 
 /\k'A/
     print
-    Pattern parse failed: An apostrophe (') is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /\k'A[ HERE ]>>/
 
 /(?P<name>AA)(?P=name)/
@@ -111,7 +111,7 @@
 
 /(?P<name>AA)(?P=name/
     print
-    Pattern parse failed: A right bracket is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /(?P<name>AA)(?P=name[ HERE ]>>/
 
 # Backreference or octal number parsing

@@ -32,7 +32,72 @@
 enum {
     REPAN_PARSE_PCRE,
     REPAN_PARSE_JAVASCRIPT,
+    REPAN_PARSE_GLOB,
 };
+
+static void init_parse(repan_parser_context *context, int mode)
+{
+    repan_undefined_name *undefined_name;
+    int undefined_found;
+
+    context->error = REPAN_SUCCESS;
+    context->pattern = context->pattern_start;
+    context->undefined_names = NULL;
+
+    context->result = (repan_pattern*)malloc(sizeof(repan_pattern));
+
+    if (context->result == NULL) {
+        free(context->pattern_start);
+        context->error = REPAN_ERR_NO_MEMORY;
+        return;
+    }
+
+    memset(context->result, 0, sizeof(repan_pattern));
+
+    if (context->options & REPAN_PARSE_UTF) {
+        context->result->options |= REPAN_MODE_UTF;
+    }
+
+    switch (mode) {
+    case REPAN_PARSE_PCRE:
+        REPAN_PRIV(parse_pcre_bracket)(context);
+        break;
+    case REPAN_PARSE_JAVASCRIPT:
+        REPAN_PRIV(parse_javascript_bracket)(context);
+        break;
+    default:
+        REPAN_ASSERT(mode == REPAN_PARSE_GLOB);
+        REPAN_PRIV(parse_glob)(context);
+        break;
+    }
+
+    free(context->pattern_start);
+    REPAN_PRIV(stack_free)(&context->stack);
+
+    undefined_name = context->undefined_names;
+    undefined_found = REPAN_FALSE;
+
+    while (undefined_name != NULL) {
+        repan_undefined_name *next = undefined_name->next;
+
+        if (!undefined_found && !(undefined_name->name->length_and_flags & REPAN_STRING_DEFINED)) {
+            undefined_found = REPAN_TRUE;
+
+            if (context->error == REPAN_SUCCESS) {
+                context->error = REPAN_ERR_CAPTURING_BRACKET_NOT_EXIST;
+                context->pattern = undefined_name->start;
+            }
+        }
+
+        REPAN_PRIV(free)(context->result, undefined_name, sizeof(repan_undefined_name));
+        undefined_name = next;
+    }
+
+    if (context->error != REPAN_SUCCESS) {
+        repan_pattern_free(context->result);
+        context->result = NULL;
+    }
+}
 
 /* ------------------------------------------------------------------------------- */
 /*  Support for uint8_t types.                                                     */
@@ -197,15 +262,7 @@ static repan_pattern *parse_u8(uint8_t *pattern, size_t length, uint32_t options
     context.options = options;
     context.extra_opts = extra_opts;
 
-    switch (mode) {
-    case REPAN_PARSE_PCRE:
-        REPAN_PRIV(repan_parse_pcre)(&context);
-        break;
-    default:
-        REPAN_ASSERT(mode == REPAN_PARSE_JAVASCRIPT);
-        REPAN_PRIV(repan_parse_javascript)(&context);
-        break;
-    }
+    init_parse(&context, mode);
 
     if (context.result)
         return context.result;
@@ -242,6 +299,12 @@ repan_pattern *repan_parse_javascript_u8(uint8_t *pattern, size_t length, uint32
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
 {
     return parse_u8(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_JAVASCRIPT);
+}
+
+repan_pattern *repan_parse_glob_u8(uint8_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
+{
+    return parse_u8(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_GLOB);
 }
 
 /* ------------------------------------------------------------------------------- */
@@ -352,15 +415,7 @@ static repan_pattern *parse_u16(uint16_t *pattern, size_t length, uint32_t optio
     context.options = options;
     context.extra_opts = extra_opts;
 
-    switch (mode) {
-    case REPAN_PARSE_PCRE:
-        REPAN_PRIV(repan_parse_pcre)(&context);
-        break;
-    default:
-        REPAN_ASSERT(mode == REPAN_PARSE_JAVASCRIPT);
-        REPAN_PRIV(repan_parse_javascript)(&context);
-        break;
-    }
+    init_parse(&context, mode);
 
     if (context.result)
         return context.result;
@@ -396,4 +451,10 @@ repan_pattern *repan_parse_javascript_u16(uint16_t *pattern, size_t length, uint
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
 {
     return parse_u16(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_JAVASCRIPT);
+}
+
+repan_pattern *repan_parse_glob_u16(uint16_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
+{
+    return parse_u16(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_GLOB);
 }

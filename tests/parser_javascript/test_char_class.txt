@@ -12,6 +12,9 @@
 /[].[^]/J
     print
 
+/.[^]./J
+     print
+
 # Test character ranges
 
 /[a-f---\b-\n]/J

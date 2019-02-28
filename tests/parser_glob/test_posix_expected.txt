@@ -1,0 +1,61 @@
+# Converting posix globs to regular expressions.
+
+"*.txt"G
+    print
+    "\A[^/.][^/]*\.txt\z"
+
+"*txt"G
+    print
+    "\A(?:[^/.][^/]*)?txt\z"
+
+"*"G
+    print
+    "\A[^/.][^/]*+\z"
+
+"a*b*c*d"G
+    print
+    "\Aa[^/]*?b(*COMMIT)[^/]*?c(*COMMIT)[^/]*d\z"
+
+"a*b*/c*d*/e*f*"G
+    print
+    "\Aa[^/]*?b(*COMMIT)[^/]*?/c(*COMMIT)[^/]*?d(*COMMIT)[^/]*?/e(*COMMIT)[^/]*?f(*COMMIT)[^/]*+\z"
+
+"ab*?*?*?c*?.txt"G
+    print
+    "\Aab[^/]{3,}?c(*COMMIT)[^/]+\.txt\z"
+
+"ab*cd?ef*?*?gh"G
+    print
+    "\Aab[^/]*?cd[^/]ef(*COMMIT)[^/]{2,}gh\z"
+
+"ab/*cd/?ef/*?*?gh/??ij/"G
+    print
+    "\Aab/(?:[^/.][^/]*?)?cd/[^/.]ef/(*COMMIT)[^/.][^/]+gh/[^/.][^/]ij/\z"
+
+"ab/cd*/ef?/gh*?*?/ij??/"G
+    print
+    "\Aab/cd[^/]*?/ef[^/]/gh(*COMMIT)[^/]{2,}+/ij[^/]{2}/\z"
+
+"ab/*/cd"G
+    print
+    "\Aab/(?:[^/.][^/]*+)?/cd\z"
+
+"ab/**/cd"G
+    print
+    "\Aab/(?>[^/.][^/]*+/|\.?+/)*cd\z"
+
+"**/*.txt"G
+    print
+    "\A(?>[^/.][^/]*+/|\.?+/)*[^/.][^/]*\.txt\z"
+
+"ab/**"G
+    print
+    "\Aab/(?>[^/.][^/]*+/|\.?+/)*[^/.][^/]*+\z"
+
+"**"G
+    print
+    "\A(?>[^/.][^/]*+/|\.?+/)*[^/.][^/]*+\z"
+
+"a*b*c/**/c*d*e"G
+    print
+    "\Aa[^/]*?b(*COMMIT)[^/]*c/(?>[^/.][^/]*+/|\.?+/)*c[^/]*d[^/]*e\z"

@@ -293,9 +293,11 @@ static void parse_group_name(repan_parser_context *context, repan_parser_locals 
     ((repan_ext_bracket_node*)locals->current.bracket_node)->u.name = name;
 }
 
-static void parse_bracket(repan_parser_context *context)
+void REPAN_PRIV(parse_javascript_bracket)(repan_parser_context *context)
 {
     repan_parser_locals locals;
+
+    REPAN_PRIV(stack_init)(&context->stack, sizeof(repan_parser_saved_bracket));
 
     locals.last_node = (repan_node*)&context->result->bracket_node;
     locals.capture_count = 0;
@@ -450,56 +452,5 @@ push_new_bracket:
         REPAN_STACK_TOP(repan_parser_saved_bracket, &context->stack) = locals.current;
 
         locals.current.bracket_start = locals.bracket_start;
-    }
-}
-
-void REPAN_PRIV(repan_parse_javascript)(repan_parser_context *context)
-{
-    repan_undefined_name *undefined_name;
-    int undefined_found;
-
-    context->error = REPAN_SUCCESS;
-    context->pattern = context->pattern_start;
-    context->undefined_names = NULL;
-
-    context->result = (repan_pattern*)malloc(sizeof(repan_pattern));
-
-    if (context->result == NULL) {
-        free(context->pattern_start);
-        context->error = REPAN_ERR_NO_MEMORY;
-        return;
-    }
-
-    REPAN_PRIV(stack_init)(&context->stack, sizeof(repan_parser_saved_bracket));
-
-    memset(context->result, 0, sizeof(repan_pattern));
-
-    parse_bracket(context);
-
-    free(context->pattern_start);
-    REPAN_PRIV(stack_free)(&context->stack);
-
-    undefined_name = context->undefined_names;
-    undefined_found = REPAN_FALSE;
-
-    while (undefined_name != NULL) {
-        repan_undefined_name *next = undefined_name->next;
-
-        if (!undefined_found && !(undefined_name->name->length_and_flags & REPAN_STRING_DEFINED)) {
-            undefined_found = REPAN_TRUE;
-
-            if (context->error == REPAN_SUCCESS) {
-                context->error = REPAN_ERR_CAPTURING_BRACKET_NOT_EXIST;
-                context->pattern = undefined_name->start;
-            }
-        }
-
-        REPAN_PRIV(free)(context->result, undefined_name, sizeof(repan_undefined_name));
-        undefined_name = next;
-    }
-
-    if (context->error != REPAN_SUCCESS) {
-        repan_pattern_free(context->result);
-        context->result = NULL;
     }
 }

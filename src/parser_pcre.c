@@ -49,7 +49,7 @@ enum {
     REPAN_BRACKET_CMD_COND_GENERIC,
     REPAN_BRACKET_CMD_COND_ASSERT,
     REPAN_BRACKET_CMD_COND_DEFINE,
-    REPAN_BRACKET_CMD_CONSTRUCT_MODIFIERS,
+    REPAN_BRACKET_CMD_SET_MODIFIERS,
     REPAN_BRACKET_CMD_CAPTURE_RESET,
 };
 
@@ -253,42 +253,6 @@ static int parse_repeat(repan_parser_context *context, repan_parser_locals *loca
     locals->prev_node = NULL;
 
     return REPAN_TRUE;
-}
-
-static void set_modifiers(repan_parser_context *context,
-    repan_parser_locals *locals, uint32_t new_modifiers)
-{
-    uint32_t old_modifiers = locals->current.modifiers;
-    repan_modifiers_node *modifiers_node;
-
-    locals->current.modifiers = new_modifiers;
-
-    old_modifiers &= REPAN_GENERIC_MODIFIER_MASK;
-    new_modifiers &= REPAN_GENERIC_MODIFIER_MASK;
-
-    if (new_modifiers == old_modifiers) {
-        return;
-    }
-
-    modifiers_node = (repan_modifiers_node*)locals->last_node;
-
-    if (modifiers_node->type != REPAN_MODIFIER_NODE) {
-        modifiers_node = REPAN_ALLOC(repan_modifiers_node, context->result);
-
-        if (modifiers_node == NULL) {
-            context->error = REPAN_ERR_NO_MEMORY;
-            context->pattern = locals->bracket_start;
-            return;
-        }
-
-        modifiers_node->next_node = NULL;
-        modifiers_node->type = REPAN_MODIFIER_NODE;
-
-        locals->last_node->next_node = (repan_node*)modifiers_node;
-        locals->last_node = (repan_node*)modifiers_node;
-    }
-
-    modifiers_node->modifiers = (uint16_t)new_modifiers;
 }
 
 enum {
@@ -584,12 +548,12 @@ static void parse_open_bracket(repan_parser_context *context, repan_parser_local
             locals->bracket_size = 0;
             context->pattern = pattern;
 
-            set_modifiers(context, locals, new_modifiers);
+            locals->current.modifiers = new_modifiers;
             return;
         case REPAN_CHAR_COLON:
             if (locals->current.modifiers != new_modifiers) {
                 locals->bracket_modifiers = new_modifiers;
-                locals->bracket_command = REPAN_BRACKET_CMD_CONSTRUCT_MODIFIERS;
+                locals->bracket_command = REPAN_BRACKET_CMD_SET_MODIFIERS;
             }
             context->pattern = pattern;
             return;
@@ -748,19 +712,16 @@ static void parse_group_name(repan_parser_context *context, repan_parser_locals 
     uint32_t *pattern = context->pattern;
     repan_string *name;
     uint32_t terminator_char;
-    uint32_t terminator_error;
 
     ((repan_ext_bracket_node*)locals->current.bracket_node)->u.name = NULL;
 
     if (pattern[-1] == REPAN_CHAR_LESS_THAN_SIGN) {
         terminator_char = REPAN_CHAR_GREATER_THAN_SIGN;
-        terminator_error = REPAN_ERR_GREATER_THAN_SIGN_EXPECTED;
     }
     else {
         REPAN_ASSERT(pattern[-1] == REPAN_CHAR_APOSTROPHE);
 
         terminator_char = REPAN_CHAR_APOSTROPHE;
-        terminator_error = REPAN_ERR_APOSTROPHE_EXPECTED;
     }
 
     if (*pattern == terminator_char
@@ -769,12 +730,12 @@ static void parse_group_name(repan_parser_context *context, repan_parser_locals 
         return;
     }
 
-    while (REPAN_PRIV(is_word_char)(*pattern)) {
+    while (REPAN_PRIV(is_word_char)(context->result, *pattern)) {
         pattern++;
     }
 
     if (*pattern != terminator_char) {
-        context->error = terminator_error;
+        context->error = REPAN_ERR_INVALID_NAME_CHAR;
         context->pattern = pattern;
         return;
     }
@@ -795,7 +756,6 @@ static void parse_group_name(repan_parser_context *context, repan_parser_locals 
 static void parse_condition(repan_parser_context *context, repan_parser_locals *locals)
 {
     uint32_t terminator_char = REPAN_CHAR_RIGHT_BRACKET;
-    uint32_t terminator_error = REPAN_ERR_RIGHT_BRACKET_EXPECTED;
     uint32_t *pattern = context->pattern;
     repan_string *name;
     uint32_t *name_start;
@@ -827,11 +787,9 @@ static void parse_condition(repan_parser_context *context, repan_parser_locals *
         if (pattern[0] == REPAN_CHAR_LESS_THAN_SIGN || pattern[0] == REPAN_CHAR_APOSTROPHE) {
             if (pattern[0] == REPAN_CHAR_LESS_THAN_SIGN) {
                 terminator_char = REPAN_CHAR_GREATER_THAN_SIGN;
-                terminator_error = REPAN_ERR_GREATER_THAN_SIGN_EXPECTED;
             }
             else {
                 terminator_char = REPAN_CHAR_APOSTROPHE;
-                terminator_error = REPAN_ERR_APOSTROPHE_EXPECTED;
             }
             locals->current.bracket_node->sub_type = REPAN_COND_NAMED_REFERENCE_BRACKET;
             condition = REPAN_CONDITION_NAME;
@@ -877,8 +835,10 @@ static void parse_condition(repan_parser_context *context, repan_parser_locals *
             return;
         }
 
-        if (*pattern != terminator_char) {
-            context->error = terminator_error;
+        REPAN_ASSERT(terminator_char == REPAN_CHAR_RIGHT_BRACKET);
+
+        if (*pattern != REPAN_CHAR_RIGHT_BRACKET) {
+            context->error = REPAN_ERR_RIGHT_BRACKET_EXPECTED;
             context->pattern = pattern;
             return;
         }
@@ -909,18 +869,18 @@ static void parse_condition(repan_parser_context *context, repan_parser_locals *
 
     name_start = pattern;
 
-    if (REPAN_IS_DECIMAL_DIGIT(*pattern) || !REPAN_PRIV(is_word_char)(*pattern)) {
+    if (REPAN_IS_DECIMAL_DIGIT(*pattern) || !REPAN_PRIV(is_word_char)(context->result, *pattern)) {
         context->error = REPAN_ERR_NAME_EXPECTED;
         context->pattern = pattern;
         return;
     }
 
-    while (REPAN_PRIV(is_word_char)(*pattern)) {
+    while (REPAN_PRIV(is_word_char)(context->result, *pattern)) {
         pattern++;
     }
 
     if (*pattern != terminator_char) {
-        context->error = terminator_error;
+        context->error = REPAN_ERR_INVALID_NAME_CHAR;
         context->pattern = pattern;
         return;
     }
@@ -969,8 +929,8 @@ static void parse_exec_command(repan_parser_context *context, repan_parser_local
         context->pattern += 8;
         return;
 
-    case REPAN_BRACKET_CMD_CONSTRUCT_MODIFIERS:
-        set_modifiers(context, locals, locals->bracket_modifiers);
+    case REPAN_BRACKET_CMD_SET_MODIFIERS:
+        locals->current.modifiers = locals->bracket_modifiers;
         return;
 
     case REPAN_BRACKET_CMD_CAPTURE_RESET:
@@ -984,9 +944,11 @@ static void parse_exec_command(repan_parser_context *context, repan_parser_local
     }
 }
 
-static void parse_bracket(repan_parser_context *context)
+void REPAN_PRIV(parse_pcre_bracket)(repan_parser_context *context)
 {
     repan_parser_locals locals;
+
+    REPAN_PRIV(stack_init)(&context->stack, sizeof(repan_parser_saved_bracket));
 
     locals.last_node = (repan_node*)&context->result->bracket_node;
     locals.capture_count = 0;
@@ -1178,56 +1140,5 @@ push_new_bracket:
         REPAN_STACK_TOP(repan_parser_saved_bracket, &context->stack) = locals.current;
 
         locals.current.bracket_start = locals.bracket_start;
-    }
-}
-
-void REPAN_PRIV(repan_parse_pcre)(repan_parser_context *context)
-{
-    repan_undefined_name *undefined_name;
-    int undefined_found;
-
-    context->error = REPAN_SUCCESS;
-    context->pattern = context->pattern_start;
-    context->undefined_names = NULL;
-
-    context->result = (repan_pattern*)malloc(sizeof(repan_pattern));
-
-    if (context->result == NULL) {
-        free(context->pattern_start);
-        context->error = REPAN_ERR_NO_MEMORY;
-        return;
-    }
-
-    REPAN_PRIV(stack_init)(&context->stack, sizeof(repan_parser_saved_bracket));
-
-    memset(context->result, 0, sizeof(repan_pattern));
-
-    parse_bracket(context);
-
-    free(context->pattern_start);
-    REPAN_PRIV(stack_free)(&context->stack);
-
-    undefined_name = context->undefined_names;
-    undefined_found = REPAN_FALSE;
-
-    while (undefined_name != NULL) {
-        repan_undefined_name *next = undefined_name->next;
-
-        if (!undefined_found && !(undefined_name->name->length_and_flags & REPAN_STRING_DEFINED)) {
-            undefined_found = REPAN_TRUE;
-
-            if (context->error == REPAN_SUCCESS) {
-                context->error = REPAN_ERR_CAPTURING_BRACKET_NOT_EXIST;
-                context->pattern = undefined_name->start;
-            }
-        }
-
-        REPAN_PRIV(free)(context->result, undefined_name, sizeof(repan_undefined_name));
-        undefined_name = next;
-    }
-
-    if (context->error != REPAN_SUCCESS) {
-        repan_pattern_free(context->result);
-        context->result = NULL;
     }
 }

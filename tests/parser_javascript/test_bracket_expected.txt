@@ -44,5 +44,5 @@
 
 /(?<\u{2d000}>)(?<a\u{2e2f}>)/16uJ
     print
-    Pattern parse failed: A greater than sign (>) is expected
+    Pattern parse failed: A character allowed in capturing group names is expected
         /(?<\u{2d000}>)(?<a[ HERE ]>>\u{2e2f}>)/

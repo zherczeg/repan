@@ -57,36 +57,23 @@ static uint32_t flatten(repan_flatten_context *context, repan_bracket_node *brac
                 if (bracket_node->sub_type == REPAN_NON_CAPTURING_BRACKET
                         && bracket_node->alt_node_list.next_alt_node == NULL
                         && bracket_node->it_min == 1 && bracket_node->it_max == 1) {
-                    int remove = REPAN_TRUE;
                     repan_node *last_node = bracket_node->alt_node_list.next_node;
 
                     if (last_node != NULL) {
-                        while (REPAN_TRUE) {
-                            if (last_node->type == REPAN_MODIFIER_NODE) {
-                                remove = REPAN_FALSE;
-                                break;
-                            }
-                            if (last_node->next_node == NULL) {
-                                break;
-                            }
+                        while (last_node->next_node != NULL) {
                             last_node = last_node->next_node;
                         }
 
-                        if (remove) {
-                            REPAN_ASSERT(last_node != NULL);
-                            last_node->next_node = bracket_node->next_node;
-                            node = bracket_node->alt_node_list.next_node;
-                            prev_node->next_node = node;
-                            REPAN_PRIV(free)(context->pattern, bracket_node, sizeof(repan_bracket_node));
-                            continue;
-                        }
+                        last_node->next_node = bracket_node->next_node;
+                        node = bracket_node->alt_node_list.next_node;
                     }
                     else {
                         node = bracket_node->next_node;
-                        prev_node->next_node = node;
-                        REPAN_PRIV(free)(context->pattern, bracket_node, sizeof(repan_bracket_node));
-                        continue;
                     }
+
+                    prev_node->next_node = node;
+                    REPAN_PRIV(free)(context->pattern, bracket_node, sizeof(repan_bracket_node));
+                    continue;
                 }
 
                 if (!REPAN_PRIV(stack_push)(&context->stack)) {

@@ -68,6 +68,7 @@ enum {
     REPAN_ERR_OCTAL_NUMBER_REQUIRED,
     REPAN_ERR_CAPTURING_BRACKET_NOT_EXIST,
     REPAN_ERR_NAME_EXPECTED,
+    REPAN_ERR_INVALID_NAME_CHAR,
     REPAN_ERR_ESCAPE_NOT_ALLOWED_IN_CLASS,
     REPAN_ERR_INVALID_RANGE,
     REPAN_ERR_RANGE_OUT_OF_ORDER,
@@ -87,6 +88,7 @@ enum {
     REPAN_ERR_UNICODE_NAMES_NOT_SUPPORTED,
     REPAN_ERR_UNTERMINATED_RAW_CHARS,
     REPAN_ERR_UNTERMINATED_COMMENT,
+    REPAN_ERR_GLOB_INVALID_ASTERISK,
 };
 
 /* Flags for repan_parse... functions. */
@@ -99,6 +101,10 @@ repan_pattern *repan_parse_pcre_u16(uint16_t *pattern, size_t length, uint32_t o
 repan_pattern *repan_parse_javascript_u8(uint8_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
 repan_pattern *repan_parse_javascript_u16(uint16_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
+repan_pattern *repan_parse_glob_u8(uint8_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
+repan_pattern *repan_parse_glob_u16(uint16_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
 
 /* Flags for repan_to_string... functions. */

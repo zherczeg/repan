@@ -52,7 +52,8 @@ typedef struct {
     repan_pattern *result;
 } repan_parser_context;
 
-void REPAN_PRIV(repan_parse_pcre)(repan_parser_context *context);
-void REPAN_PRIV(repan_parse_javascript)(repan_parser_context *context);
+void REPAN_PRIV(parse_pcre_bracket)(repan_parser_context *context);
+void REPAN_PRIV(parse_javascript_bracket)(repan_parser_context *context);
+void REPAN_PRIV(parse_glob)(repan_parser_context *context);
 
 #endif /* REPAN_PARSER_H */
