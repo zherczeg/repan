@@ -1,0 +1,21 @@
+# Test character sets
+
+/\?\[[\a-z][]-]/X
+    print
+
+/[\-\]/X
+    print
+
+/[c-a]/X
+    print
+
+/[@#/X
+    print
+
+# Test character ranges
+
+/[[:upper:]-]+?/X
+    print
+
+/[---[:alpha:]-a]/X
+    print

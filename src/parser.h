@@ -54,6 +54,12 @@ typedef struct {
 
 void REPAN_PRIV(parse_pcre_bracket)(repan_parser_context *context);
 void REPAN_PRIV(parse_javascript_bracket)(repan_parser_context *context);
+void REPAN_PRIV(parse_posix_bracket)(repan_parser_context *context);
 void REPAN_PRIV(parse_glob)(repan_parser_context *context);
+
+uint32_t REPAN_PRIV(parse_decimal)(uint32_t **pattern_ref);
+uint32_t REPAN_PRIV(parse_posix_class)(uint32_t **pattern_start);
+int REPAN_PRIV(parse_repeat)(repan_parser_context *context,
+    repan_node **last_node_ref, repan_prev_node **prev_node_ref);
 
 #endif /* REPAN_PARSER_H */

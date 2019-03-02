@@ -88,7 +88,7 @@ static void write_char_u8_utf(repan_to_string_context *context, uint32_t chr)
     context->result = (void*)(dst + 1);
 }
 
-uint8_t *repan_to_string_u8(repan_pattern *pattern, uint32_t options,
+uint8_t *repan_to_string_pcre_u8(repan_pattern *pattern, uint32_t options,
         repan_to_string_extra_opts *extra_opts, size_t *length, uint32_t *error)
 {
     repan_to_string_context context;
@@ -156,7 +156,7 @@ static void write_char_u16_utf(repan_to_string_context *context, uint32_t chr)
     context->result = (void*)(dst + 1);
 }
 
-uint16_t *repan_to_string_u16(repan_pattern *pattern, uint32_t options,
+uint16_t *repan_to_string_pcre_u16(repan_pattern *pattern, uint32_t options,
         repan_to_string_extra_opts *extra_opts, size_t *length, uint32_t *error)
 {
     repan_to_string_context context;

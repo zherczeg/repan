@@ -292,10 +292,10 @@ static int execute_commands(test_context *context, const char *data, const char 
             }
 
             if (context->char_size == 8) {
-                string_result = (void*)repan_to_string_u8(context->pattern, print_options, NULL, &length, &error);
+                string_result = (void*)repan_to_string_pcre_u8(context->pattern, print_options, NULL, &length, &error);
             }
             else {
-                string_result = (void*)repan_to_string_u16(context->pattern, print_options, NULL, &length, &error);
+                string_result = (void*)repan_to_string_pcre_u16(context->pattern, print_options, NULL, &length, &error);
             }
 
             if (string_result == NULL) {
@@ -374,6 +374,7 @@ static int execute_commands(test_context *context, const char *data, const char 
 enum {
     REPAN_TEST_PARSE_PCRE,
     REPAN_TEST_PARSE_JAVASCRIPT,
+    REPAN_TEST_PARSE_POSIX,
     REPAN_TEST_PARSE_GLOB,
 };
 
@@ -487,6 +488,15 @@ static int process_commands(test_context *context, const char *data, const char 
                     mode = REPAN_TEST_PARSE_GLOB;
                     data++;
                     continue;
+                case 'X':
+                    if (mode != REPAN_TEST_PARSE_PCRE) {
+                        print_str(begin, data);
+                        printf("\nError: Duplicatted parsing mode at line %d\n", context->line);
+                        return 1;
+                    }
+                    mode = REPAN_TEST_PARSE_POSIX;
+                    data++;
+                    continue;
                 }
                 break;
             }
@@ -534,6 +544,10 @@ static int process_commands(test_context *context, const char *data, const char 
                 context->pattern = repan_parse_javascript_u8((uint8_t*)context->pattern_buffer,
                     context->pattern_size, context->options, NULL, &error, &error_offset);
                 break;
+            case REPAN_TEST_PARSE_POSIX:
+                context->pattern = repan_parse_posix_u8((uint8_t*)context->pattern_buffer,
+                    context->pattern_size, context->options, NULL, &error, &error_offset);
+                break;
             default:
                 context->pattern = repan_parse_glob_u8((uint8_t*)context->pattern_buffer,
                     context->pattern_size, context->options, NULL, &error, &error_offset);
@@ -547,6 +561,10 @@ static int process_commands(test_context *context, const char *data, const char 
                 break;
             case REPAN_TEST_PARSE_JAVASCRIPT:
                 context->pattern = repan_parse_javascript_u16((uint16_t*)context->pattern_buffer,
+                    context->pattern_size, context->options, NULL, &error, &error_offset);
+                break;
+            case REPAN_TEST_PARSE_POSIX:
+                context->pattern = repan_parse_posix_u16((uint16_t*)context->pattern_buffer,
                     context->pattern_size, context->options, NULL, &error, &error_offset);
                 break;
             default:

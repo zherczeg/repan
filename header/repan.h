@@ -88,6 +88,7 @@ enum {
     REPAN_ERR_UNICODE_NAMES_NOT_SUPPORTED,
     REPAN_ERR_UNTERMINATED_RAW_CHARS,
     REPAN_ERR_UNTERMINATED_COMMENT,
+    REPAN_ERR_POSIX_INVALID_QUANTIFIER,
     REPAN_ERR_GLOB_INVALID_ASTERISK,
 };
 
@@ -98,10 +99,17 @@ repan_pattern *repan_parse_pcre_u8(uint8_t *pattern, size_t length, uint32_t opt
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
 repan_pattern *repan_parse_pcre_u16(uint16_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
+
 repan_pattern *repan_parse_javascript_u8(uint8_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
 repan_pattern *repan_parse_javascript_u16(uint16_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
+
+repan_pattern *repan_parse_posix_u8(uint8_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
+repan_pattern *repan_parse_posix_u16(uint16_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
+
 repan_pattern *repan_parse_glob_u8(uint8_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
 repan_pattern *repan_parse_glob_u16(uint16_t *pattern, size_t length, uint32_t options,
@@ -111,16 +119,19 @@ repan_pattern *repan_parse_glob_u16(uint16_t *pattern, size_t length, uint32_t o
 #define REPAN_TO_STRING_UTF 0x1
 #define REPAN_TO_STRING_ASCII 0x2
 
-uint8_t *repan_to_string_u8(repan_pattern *pattern, uint32_t options,
+uint8_t *repan_to_string_pcre_u8(repan_pattern *pattern, uint32_t options,
     repan_to_string_extra_opts *extra_opts, size_t *length, uint32_t *error);
-uint16_t *repan_to_string_u16(repan_pattern *pattern, uint32_t options,
+uint16_t *repan_to_string_pcre_u16(repan_pattern *pattern, uint32_t options,
     repan_to_string_extra_opts *extra_opts, size_t *length, uint32_t *error);
 
-void repan_pattern_free(repan_pattern *pattern);
+/* Optimizations. */
 
 uint32_t repan_uncapture(repan_pattern *pattern);
 uint32_t repan_flatten(repan_pattern *pattern);
 
+/* Other functions. */
+
+void repan_pattern_free(repan_pattern *pattern);
 const char *repan_get_error_message(uint32_t error);
 
 #endif /* REPAN_H */

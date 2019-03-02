@@ -377,7 +377,7 @@ static int parse_may_backref(repan_parser_context *context, repan_parser_locals 
     uint32_t *pattern = context->pattern;
     repan_reference_node *reference_node;
 
-    uint32_t backref_num = parse_decimal(&pattern);
+    uint32_t backref_num = REPAN_PRIV(parse_decimal)(&pattern);
 
     /* Includes REPAN_DECIMAL_INF check. */
     if (backref_num > locals->capture_count) {

@@ -32,6 +32,7 @@
 enum {
     REPAN_PARSE_PCRE,
     REPAN_PARSE_JAVASCRIPT,
+    REPAN_PARSE_POSIX,
     REPAN_PARSE_GLOB,
 };
 
@@ -64,6 +65,9 @@ static void init_parse(repan_parser_context *context, int mode)
         break;
     case REPAN_PARSE_JAVASCRIPT:
         REPAN_PRIV(parse_javascript_bracket)(context);
+        break;
+    case REPAN_PARSE_POSIX:
+        REPAN_PRIV(parse_posix_bracket)(context);
         break;
     default:
         REPAN_ASSERT(mode == REPAN_PARSE_GLOB);
@@ -301,6 +305,12 @@ repan_pattern *repan_parse_javascript_u8(uint8_t *pattern, size_t length, uint32
     return parse_u8(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_JAVASCRIPT);
 }
 
+repan_pattern *repan_parse_posix_u8(uint8_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
+{
+    return parse_u8(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_POSIX);
+}
+
 repan_pattern *repan_parse_glob_u8(uint8_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
 {
@@ -451,6 +461,12 @@ repan_pattern *repan_parse_javascript_u16(uint16_t *pattern, size_t length, uint
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
 {
     return parse_u16(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_JAVASCRIPT);
+}
+
+repan_pattern *repan_parse_posix_u16(uint16_t *pattern, size_t length, uint32_t options,
+     repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset)
+{
+    return parse_u16(pattern, length, options, extra_opts, error, error_offset, REPAN_PARSE_POSIX);
 }
 
 repan_pattern *repan_parse_glob_u16(uint16_t *pattern, size_t length, uint32_t options,

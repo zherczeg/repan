@@ -1,0 +1,86 @@
+# Test posix patterns
+
+/a{,}b{0,1}/X
+    print
+    /a*b?/
+
+/a+?*/X
+    print
+    /(?:(?:a+)?)*/
+
+/a{2,3}{4,5}? (bc){1,2}+? (ef){1}{1}{2}{1}{1}+/X
+    print
+    /(?:(?:a{2,3}){4,5})? (?:(?:(bc){1,2})+)? (?:(ef){2})+/
+
+/(?m)/X
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /([ HERE ]>>?m)/
+
+/^+/X
+    print
+    Pattern parse failed: Nothing to repeat before a quantifier
+        /^[ HERE ]>>+/
+
+/a{}/X
+    print
+    Pattern parse failed: Invalid {} repeat block
+        /a[ HERE ]>>{}/
+
+/a{/X
+    print
+    Pattern parse failed: Invalid {} repeat block
+        /a[ HERE ]>>{/
+
+/a{x,y}/X
+    print
+    Pattern parse failed: Invalid {} repeat block
+        /a[ HERE ]>>{x,y}/
+
+/a{6,5}/X
+    print
+    Pattern parse failed: Quantifiers are out of order in {} repeat
+        /a[ HERE ]>>{6,5}/
+
+# Test backreferences
+
+/(ab)\1/X
+    print
+    /(ab)\g{1}/
+
+/(((ab)))\3/X
+    print
+    /(((ab)))\g{3}/
+
+/(ab)\11(cd)\22(ef)\33/X
+    print
+    /(ab)\g{1}1(cd)\g{2}2(ef)\g{3}3/
+
+/((((ab)\4)\3)\2)\1/X
+    print
+    /((((ab)\g{4})\g{3})\g{2})\g{1}/
+
+/(ab\1)/X
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(ab[ HERE ]>>\1)/
+
+/\1(ab)/X
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /[ HERE ]>>\1(ab)/
+
+/(ab)\2(ab)/X
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(ab)[ HERE ]>>\2(ab)/
+
+/((((a)\3)))/X
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /((((a)[ HERE ]>>\3)))/
+
+/((a)\1)/X
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /((a)[ HERE ]>>\1)/

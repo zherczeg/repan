@@ -1,0 +1,30 @@
+# Test character sets
+
+/\?\[[\a-z][]-]/X
+    print
+    /\?\[[\\a-z][\]\-]/
+
+/[\-\]/X
+    print
+    /[\\]/
+
+/[c-a]/X
+    print
+    Pattern parse failed: Range start and end are out of order
+        /[[ HERE ]>>c-a]/
+
+/[@#/X
+    print
+    Pattern parse failed: Unterminated [...] character class
+        /[ HERE ]>>[@#/
+
+# Test character ranges
+
+/[[:upper:]-]+?/X
+    print
+    /(?:[[:upper:]\-]+)?/
+
+/[---[:alpha:]-a]/X
+    print
+    Pattern parse failed: Neither the start nor the end of a range can be a character class
+        /[---[ HERE ]>>[:alpha:]-a]/

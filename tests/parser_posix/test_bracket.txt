@@ -1,0 +1,57 @@
+# Test posix patterns
+
+/a{,}b{0,1}/X
+    print
+
+/a+?*/X
+    print
+
+/a{2,3}{4,5}? (bc){1,2}+? (ef){1}{1}{2}{1}{1}+/X
+    print
+
+/(?m)/X
+    print
+
+/^+/X
+    print
+
+/a{}/X
+    print
+
+/a{/X
+    print
+
+/a{x,y}/X
+    print
+
+/a{6,5}/X
+    print
+
+# Test backreferences
+
+/(ab)\1/X
+    print
+
+/(((ab)))\3/X
+    print
+
+/(ab)\11(cd)\22(ef)\33/X
+    print
+
+/((((ab)\4)\3)\2)\1/X
+    print
+
+/(ab\1)/X
+    print
+
+/\1(ab)/X
+    print
+
+/(ab)\2(ab)/X
+    print
+
+/((((a)\3)))/X
+    print
+
+/((a)\1)/X
+    print

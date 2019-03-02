@@ -123,6 +123,8 @@ const char *repan_get_error_message(uint32_t error)
         return "Unterminated \\Q...\\E sequence";
     case REPAN_ERR_UNTERMINATED_COMMENT:
         return "Unterminated comment";
+    case REPAN_ERR_POSIX_INVALID_QUANTIFIER:
+        return "Invalid {} repeat block";
     case REPAN_ERR_GLOB_INVALID_ASTERISK:
         return "A ** wildchard must be at the start or end of a pttern, or surrounded by directory separators";
     default:

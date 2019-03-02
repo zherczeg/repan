@@ -200,7 +200,7 @@ static void parse_reference(repan_parser_context *context, repan_parser_locals *
         }
 
         if (REPAN_IS_DECIMAL_DIGIT(*pattern)) {
-            ref_num = parse_decimal(&pattern);
+            ref_num = REPAN_PRIV(parse_decimal)(&pattern);
 
             if (ref_num == 0 && sign != 0) {
                 context->error = REPAN_ERR_SIGNED_ZERO_IS_NOT_ALLOWED;
@@ -373,7 +373,7 @@ static int parse_may_backref(repan_parser_context *context, repan_parser_locals 
     repan_reference_node *reference_node;
 
     int is_backref = (*pattern == REPAN_CHAR_8 || *pattern == REPAN_CHAR_9);
-    uint32_t backref_num = parse_decimal(&pattern);
+    uint32_t backref_num = REPAN_PRIV(parse_decimal)(&pattern);
 
     if (!is_backref && backref_num >= 10 && backref_num > locals->capture_count) {
         return REPAN_FALSE;
@@ -792,50 +792,6 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
     locals->last_node = node;
 }
 
-static uint32_t parse_posix_class(uint32_t **pattern_start)
-{
-    uint32_t *pattern = *pattern_start;
-    uint32_t *start;
-    uint32_t data;
-    int negated = REPAN_FALSE;
-
-    REPAN_ASSERT(pattern[-1] == REPAN_CHAR_LEFT_SQUARE_BRACKET && pattern[0] == REPAN_CHAR_COLON);
-
-    pattern++;
-
-    if (*pattern == REPAN_CHAR_CIRCUMFLEX_ACCENT) {
-        negated = REPAN_TRUE;
-        pattern++;
-    }
-
-    start = pattern;
-
-    while (REPAN_IS_LOWERCASE_LATIN(*pattern)) {
-        pattern++;
-    }
-
-    if (pattern[0] != REPAN_CHAR_COLON || pattern[1] != REPAN_CHAR_RIGHT_SQUARE_BRACKET) {
-        return 0;
-    }
-
-    if (pattern == start) {
-        return 0;
-    }
-
-    data = REPAN_PRIV(find_posix_class)(start, pattern - start);
-
-    if (data == 0) {
-        return 0;
-    }
-
-    *pattern_start = pattern + 2;
-
-    if (negated) {
-        data += (data & REPAN_POSIX_OPT_IS_PERL) ? REPAN_NEG_PERL_CLASS : REPAN_NEG_POSIX_CLASS;
-    }
-    return data;
-}
-
 static void parse_char_range(repan_parser_context *context, repan_parser_locals *locals)
 {
     repan_char_class_node *char_class_node = REPAN_ALLOC(repan_char_class_node, context->result);
@@ -1038,7 +994,7 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
             }
         }
         else if (current_char == REPAN_CHAR_LEFT_SQUARE_BRACKET && *pattern == REPAN_CHAR_COLON) {
-            uint32_t data = parse_posix_class(&pattern);
+            uint32_t data = REPAN_PRIV(parse_posix_class)(&pattern);
 
             if (data != 0) {
                 node_type = (data & REPAN_POSIX_OPT_IS_PERL) ? REPAN_PERL_CLASS_NODE : REPAN_POSIX_CLASS_NODE;

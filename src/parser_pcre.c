@@ -74,25 +74,6 @@ typedef struct {
     uint32_t bracket_modifiers;
 } repan_parser_locals;
 
-static uint32_t parse_decimal(uint32_t **pattern_ref)
-{
-    uint32_t *pattern = *pattern_ref;
-    uint32_t decimal = 0;
-    uint32_t digit = *pattern++;
-
-    do {
-        if (decimal >= 100000000) {
-            return REPAN_DECIMAL_INF;
-        }
-
-        decimal = decimal * 10 + digit - REPAN_CHAR_0;
-        digit = *pattern++;
-    } while (REPAN_IS_DECIMAL_DIGIT(digit));
-
-    *pattern_ref = pattern - 1;
-    return decimal;
-}
-
 static repan_string *parse_add_name_reference(repan_parser_context *context, uint32_t *start, size_t length)
 {
     repan_string *name = REPAN_PRIV(string_add)(&context->result->bracket_names, start, length, &context->error);
@@ -122,138 +103,6 @@ static repan_string *parse_add_name_reference(repan_parser_context *context, uin
 }
 
 #include "parser_pcre_char_inl.c"
-
-static int parse_repeat(repan_parser_context *context, repan_parser_locals *locals, uint32_t current_char)
-{
-    repan_bracket_node *bracket_node;
-    uint32_t *pattern = context->pattern;
-    uint8_t it_type = REPAN_BRACKET_IT_GREEDY;
-    uint32_t it_min;
-    uint32_t it_max;
-
-    REPAN_ASSERT(locals->last_node->next_node == NULL);
-
-    if (current_char != REPAN_CHAR_LEFT_BRACE) {
-        if (current_char == REPAN_CHAR_ASTERISK) {
-            it_min = 0;
-            it_max = REPAN_DECIMAL_INF;
-        }
-        else if (current_char == REPAN_CHAR_PLUS) {
-            it_min = 1;
-            it_max = REPAN_DECIMAL_INF;
-        }
-        else {
-            REPAN_ASSERT(current_char == REPAN_CHAR_QUESTION_MARK);
-            it_min = 0;
-            it_max = 1;
-        }
-
-        pattern++;
-    }
-    else {
-        pattern++;
-
-        if (!REPAN_IS_DECIMAL_DIGIT(*pattern)) {
-            return REPAN_FALSE;
-        }
-
-        it_min = parse_decimal(&pattern);
-        if (it_min == REPAN_DECIMAL_INF) {
-            context->error = REPAN_ERR_TOO_BIG_QUANTIFIER;
-            context->pattern = pattern;
-            return REPAN_FALSE;
-        }
-
-        it_max = it_min;
-        if (*pattern == REPAN_CHAR_COMMA) {
-            pattern++;
-            it_max = REPAN_DECIMAL_INF;
-
-            if (REPAN_IS_DECIMAL_DIGIT(*pattern)) {
-                it_max = parse_decimal(&pattern);
-                if (it_max == REPAN_DECIMAL_INF) {
-                    context->error = REPAN_ERR_TOO_BIG_QUANTIFIER;
-                    context->pattern = pattern;
-                    return REPAN_FALSE;
-                }
-
-            }
-        }
-
-        if (*pattern != REPAN_CHAR_RIGHT_BRACE) {
-            return REPAN_FALSE;
-        }
-
-        if (it_max < it_min) {
-            context->error = REPAN_ERR_QUANTIFIER_OUT_OF_ORDER;
-            return REPAN_FALSE;
-        }
-
-        pattern++;
-    }
-
-    REPAN_ASSERT(locals->last_node->type != REPAN_BRACKET_NODE
-            || locals->prev_node == NULL
-            || locals->prev_node == (repan_prev_node*)locals->last_node);
-    REPAN_ASSERT(locals->last_node->type == REPAN_BRACKET_NODE
-            || locals->prev_node == NULL
-            || locals->prev_node->next_node == locals->last_node);
-
-    if (locals->prev_node == NULL || locals->last_node->type > REPAN_NODE_ITERABLE_MAX) {
-        context->error = REPAN_ERR_NOTHING_TO_REPEAT;
-        return REPAN_FALSE;
-    }
-
-    current_char = *pattern;
-    if (current_char == REPAN_CHAR_QUESTION_MARK) {
-        it_type = REPAN_BRACKET_IT_NON_GREEDY;
-        pattern++;
-    }
-    else if (current_char == REPAN_CHAR_PLUS) {
-        it_type = REPAN_BRACKET_IT_POSSESSIVE;
-        pattern++;
-    }
-
-    context->pattern = pattern;
-
-    if (it_min == it_max) {
-        it_type = REPAN_BRACKET_IT_GREEDY;
-
-        if (it_min == 1) {
-            locals->prev_node = NULL;
-            return REPAN_TRUE;
-        }
-    }
-
-    if (locals->last_node->type != REPAN_BRACKET_NODE) {
-        bracket_node = REPAN_ALLOC(repan_bracket_node, context->result);
-
-        if (bracket_node == NULL) {
-            context->error = REPAN_ERR_NO_MEMORY;
-            return REPAN_FALSE;
-        }
-
-        bracket_node->next_node = NULL;
-        bracket_node->type = REPAN_BRACKET_NODE;
-        bracket_node->sub_type = REPAN_NON_CAPTURING_BRACKET;
-
-        bracket_node->alt_node_list.next_node = locals->last_node;
-        bracket_node->alt_node_list.next_alt_node = NULL;
-
-        locals->prev_node->next_node = (repan_node*)bracket_node;
-        locals->last_node = (repan_node*)bracket_node;
-    }
-    else {
-        bracket_node = (repan_bracket_node*)locals->last_node;
-    }
-
-    bracket_node->it_type = it_type;
-    bracket_node->it_min = it_min;
-    bracket_node->it_max = it_max;
-    locals->prev_node = NULL;
-
-    return REPAN_TRUE;
-}
 
 enum {
     REPAN_MODIFIER_MODE_SET,
@@ -672,7 +521,7 @@ static void parse_config(repan_parser_context *context, repan_parser_locals *loc
                 break;
             }
 
-            number = parse_decimal(&pattern);
+            number = REPAN_PRIV(parse_decimal)(&pattern);
         }
 
         if (*pattern != REPAN_CHAR_RIGHT_BRACKET) {
@@ -823,7 +672,7 @@ static void parse_condition(repan_parser_context *context, repan_parser_locals *
             return;
         }
 
-        ref_num = parse_decimal(&pattern);
+        ref_num = REPAN_PRIV(parse_decimal)(&pattern);
 
         if (ref_num == 0 && sign != 0) {
             context->error = REPAN_ERR_SIGNED_ZERO_IS_NOT_ALLOWED;
@@ -1110,7 +959,7 @@ void REPAN_PRIV(parse_pcre_bracket)(repan_parser_context *context)
             case REPAN_CHAR_PLUS:
             case REPAN_CHAR_QUESTION_MARK:
             case REPAN_CHAR_LEFT_BRACE:
-                if (parse_repeat(context, &locals, current_char)) {
+                if (REPAN_PRIV(parse_repeat)(context, &locals.last_node, &locals.prev_node)) {
                     continue;
                 }
 
