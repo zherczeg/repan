@@ -1,57 +1,57 @@
 # Test posix patterns
 
-/a{,}b{0,1}/X
+/a{,}b{0,1}/O
     print
 
-/a+?*/X
+/a+?*/O
     print
 
-/a{2,3}{4,5}? (bc){1,2}+? (ef){1}{1}{2}{1}{1}+/X
+/a{2,3}{4,5}? (bc){1,2}+? (ef){1}{1}{2}{1}{1}+/O
     print
 
-/(?m)/X
+/(?m)/O
     print
 
-/^+/X
+/^+/O
     print
 
-/a{}/X
+/a{}/O
     print
 
-/a{/X
+/a{/O
     print
 
-/a{x,y}/X
+/a{x,y}/O
     print
 
-/a{6,5}/X
+/a{6,5}/O
     print
 
 # Test backreferences
 
-/(ab)\1/X
+/(ab)\1/O
     print
 
-/(((ab)))\3/X
+/(((ab)))\3/O
     print
 
-/(ab)\11(cd)\22(ef)\33/X
+/(ab)\11(cd)\22(ef)\33/O
     print
 
-/((((ab)\4)\3)\2)\1/X
+/((((ab)\4)\3)\2)\1/O
     print
 
-/(ab\1)/X
+/(ab\1)/O
     print
 
-/\1(ab)/X
+/\1(ab)/O
     print
 
-/(ab)\2(ab)/X
+/(ab)\2(ab)/O
     print
 
-/((((a)\3)))/X
+/((((a)\3)))/O
     print
 
-/((a)\1)/X
+/((a)\1)/O
     print

@@ -61,6 +61,7 @@ enum {
     REPAN_ERR_EQUALS_SIGN_EXPECTED,
     REPAN_ERR_APOSTROPHE_EXPECTED,
     REPAN_ERR_COLON_EXPECTED,
+    REPAN_ERR_BACKSLASH_EXPECTED,
     REPAN_ERR_SIGNED_INTEGER_REQUIRED,
     REPAN_ERR_UNSIGNED_INTEGER_REQUIRED,
     REPAN_ERR_SIGNED_ZERO_IS_NOT_ALLOWED,
@@ -92,8 +93,22 @@ enum {
     REPAN_ERR_GLOB_INVALID_ASTERISK,
 };
 
-/* Flags for repan_parse... functions. */
-#define REPAN_PARSE_UTF 0x1
+/* Flags for any repan_parse... functions. */
+#define REPAN_PARSE_UTF 0x00000001
+   /* Modifier: i */
+#define REPAN_PARSE_CASELESS 0x00000002
+   /* Modifier: m */
+#define REPAN_PARSE_MULTILINE 0x00000004
+   /* Modifier: s */
+#define REPAN_PARSE_DOT_ANY 0x00000008
+
+/* Flags for repan_parse_pcre... functions. */
+   /* Modifier: n */
+#define REPAN_PARSE_PCRE_NO_AUTOCAPTURE 0x00000100
+   /* Modifier: x */
+#define REPAN_PARSE_PCRE_EXTENDED 0x00000200
+   /* Modifier: xx */
+#define REPAN_PARSE_PCRE_EXTENDED_MORE 0x00000400
 
 repan_pattern *repan_parse_pcre_u8(uint8_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
@@ -104,6 +119,10 @@ repan_pattern *repan_parse_javascript_u8(uint8_t *pattern, size_t length, uint32
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
 repan_pattern *repan_parse_javascript_u16(uint16_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);
+
+/* Flags for repan_parse_posix... functions. */
+   /* Basic regular expressions (default: extended) */
+#define REPAN_PARSE_POSIX_BASIC 0x00000100
 
 repan_pattern *repan_parse_posix_u8(uint8_t *pattern, size_t length, uint32_t options,
      repan_parse_extra_opts *extra_opts, uint32_t *error, size_t *error_offset);

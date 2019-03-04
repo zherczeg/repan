@@ -1,21 +1,21 @@
 # Test character sets
 
-/\?\[[\a-z][]-]/X
+/\?\[[\a-z][]-]/O
     print
 
-/[\-\]/X
+/[\-\]/O
     print
 
-/[c-a]/X
+/[c-a]/O
     print
 
-/[@#/X
+/[@#/O
     print
 
 # Test character ranges
 
-/[[:upper:]-]+?/X
+/[[:upper:]-]+?/O
     print
 
-/[---[:alpha:]-a]/X
+/[---[:alpha:]-a]/O
     print

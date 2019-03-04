@@ -110,6 +110,15 @@ static int parse_repeat(repan_parser_context *context, repan_parser_locals *loca
             }
         }
 
+        if (context->options & REPAN_PARSE_POSIX_BASIC) {
+            if (*pattern != REPAN_CHAR_BACKSLASH) {
+                context->error = REPAN_ERR_BACKSLASH_EXPECTED;
+                context->pattern = pattern;
+                return REPAN_FALSE;
+            }
+            pattern++;
+        }
+
         if (*pattern != REPAN_CHAR_RIGHT_BRACE) {
             context->error = REPAN_ERR_RIGHT_BRACE_EXPECTED;
             context->pattern = pattern;
@@ -232,15 +241,15 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
         break;
     case REPAN_CHAR_CIRCUMFLEX_ACCENT:
         node_type = REPAN_ASSERT_CIRCUMFLEX_NODE;
-        node_sub_type = REPAN_FALSE;
+        node_sub_type = (uint8_t)(context->options & REPAN_PARSE_MULTILINE);
         break;
     case REPAN_CHAR_DOLLAR:
         node_type = REPAN_ASSERT_DOLLAR_NODE;
-        node_sub_type = REPAN_FALSE;
+        node_sub_type = (uint8_t)(context->options & REPAN_PARSE_MULTILINE);
         break;
     case REPAN_CHAR_DOT:
         node_type = REPAN_DOT_NODE;
-        node_sub_type = REPAN_FALSE;
+        node_sub_type = (uint8_t)(context->options & REPAN_PARSE_DOT_ANY);
         break;
     }
 
@@ -404,6 +413,7 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
 void REPAN_PRIV(parse_posix_bracket)(repan_parser_context *context)
 {
     repan_parser_locals locals;
+    int is_basic = (context->options & REPAN_PARSE_POSIX_BASIC) != 0;
 
     REPAN_PRIV(stack_init)(&context->stack, sizeof(repan_parser_saved_bracket));
 
@@ -440,7 +450,7 @@ void REPAN_PRIV(parse_posix_bracket)(repan_parser_context *context)
         locals.prev_node = NULL;
 
         while (REPAN_TRUE) {
-            uint32_t current_char;
+            uint32_t current_char, meta_char;
             repan_alt_node *new_alt_node;
 
             if (context->pattern >= context->pattern_end) {
@@ -455,7 +465,23 @@ void REPAN_PRIV(parse_posix_bracket)(repan_parser_context *context)
 
             current_char = *context->pattern;
 
-            switch (current_char) {
+            if (is_basic) {
+                meta_char = REPAN_CHAR_NUL;
+                if (current_char == REPAN_CHAR_BACKSLASH
+                        && context->pattern[1] != REPAN_CHAR_ASTERISK
+                        && context->pattern[1] != REPAN_CHAR_LEFT_SQUARE_BRACKET) {
+                    meta_char = context->pattern[1];
+                    context->pattern++;
+                }
+                else if (current_char == REPAN_CHAR_ASTERISK || current_char == REPAN_CHAR_LEFT_SQUARE_BRACKET) {
+                    meta_char = current_char;
+                }
+            }
+            else {
+                meta_char = current_char;
+            }
+
+            switch (meta_char) {
             case REPAN_CHAR_LEFT_BRACKET:
                 locals.bracket_start = context->pattern;
                 locals.bracket_type = REPAN_CAPTURING_BRACKET;
@@ -520,6 +546,10 @@ void REPAN_PRIV(parse_posix_bracket)(repan_parser_context *context)
                 return;
 
             default:
+                if (is_basic && current_char == REPAN_CHAR_BACKSLASH && meta_char != REPAN_CHAR_NUL) {
+                    context->pattern--;
+                }
+
                 parse_character(context, &locals, current_char);
                 break;
             }

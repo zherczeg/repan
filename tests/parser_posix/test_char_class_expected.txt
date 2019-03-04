@@ -1,30 +1,30 @@
 # Test character sets
 
-/\?\[[\a-z][]-]/X
+/\?\[[\a-z][]-]/O
     print
     /\?\[[\\a-z][\]\-]/
 
-/[\-\]/X
+/[\-\]/O
     print
     /[\\]/
 
-/[c-a]/X
+/[c-a]/O
     print
     Pattern parse failed: Range start and end are out of order
         /[[ HERE ]>>c-a]/
 
-/[@#/X
+/[@#/O
     print
     Pattern parse failed: Unterminated [...] character class
         /[ HERE ]>>[@#/
 
 # Test character ranges
 
-/[[:upper:]-]+?/X
+/[[:upper:]-]+?/O
     print
     /(?:[[:upper:]\-]+)?/
 
-/[---[:alpha:]-a]/X
+/[---[:alpha:]-a]/O
     print
     Pattern parse failed: Neither the start nor the end of a range can be a character class
         /[---[ HERE ]>>[:alpha:]-a]/

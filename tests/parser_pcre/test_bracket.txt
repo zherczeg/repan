@@ -53,6 +53,26 @@
 /a(?iX/
     print
 
+# Global modifiers
+
+/.\N./s
+    print
+
+/^a(?^:b$)/im
+    print
+
+/((ab))(cd)/n
+    print
+
+/(ab)\g{1}/n
+    print
+
+/a b [c d]/x
+    print
+
+/a b [c d]/e
+    print
+
 # Non-capturing group
 
 /(?n)(ab)(?<name>cd)(ef)\1/

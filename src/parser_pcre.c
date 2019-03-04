@@ -233,7 +233,7 @@ static void parse_open_bracket(repan_parser_context *context, repan_parser_local
     locals->bracket_command = REPAN_BRACKET_CMD_NONE;
 
     if (current_char != REPAN_CHAR_QUESTION_MARK) {
-        if (!(locals->current.modifiers & REPAN_MODIFIER_NO_AUTOCAPTURE)) {
+        if (!(locals->current.modifiers & REPAN_PARSE_PCRE_NO_AUTOCAPTURE)) {
             locals->bracket_type = REPAN_CAPTURING_BRACKET;
 
             if (++locals->capture_count > REPAN_RESOURCE_MAX) {
@@ -388,7 +388,6 @@ static void parse_open_bracket(repan_parser_context *context, repan_parser_local
 
     while (REPAN_TRUE) {
         uint32_t modifier_flag;
-        const uint8_t *modifier_char;
 
         current_char = pattern[-1];
 
@@ -406,22 +405,6 @@ static void parse_open_bracket(repan_parser_context *context, repan_parser_local
             }
             context->pattern = pattern;
             return;
-        case REPAN_CHAR_x:
-            pattern++;
-
-            if (modifier_mode != REPAN_MODIFIER_MODE_CLEAR) {
-                if (pattern[-1] == REPAN_CHAR_x) {
-                    new_modifiers |= REPAN_MODIFIER_EXTENDED_MORE;
-                    pattern++;
-                }
-                else {
-                    new_modifiers |= REPAN_MODIFIER_EXTENDED;
-                }
-            }
-            else {
-                new_modifiers &= ~REPAN_MODIFIER_EXTENDED_MORE;
-            }
-            continue;
         case REPAN_CHAR_MINUS:
             if (modifier_mode != REPAN_MODIFIER_MODE_SET) {
                 context->error = REPAN_ERR_INVALID_HYPEN_IN_OPTION_LIST;
@@ -432,30 +415,41 @@ static void parse_open_bracket(repan_parser_context *context, repan_parser_local
             modifier_mode = REPAN_MODIFIER_MODE_CLEAR;
             pattern++;
             continue;
-        }
+        case REPAN_CHAR_i:
+            modifier_flag = REPAN_PARSE_CASELESS;
+            break;
+        case REPAN_CHAR_m:
+            modifier_flag = REPAN_PARSE_MULTILINE;
+            break;
+        case REPAN_CHAR_s:
+            modifier_flag = REPAN_PARSE_DOT_ANY;
+            break;
+        case REPAN_CHAR_n:
+            modifier_flag = REPAN_PARSE_PCRE_NO_AUTOCAPTURE;
+            break;
+        case REPAN_CHAR_x:
+            modifier_flag = REPAN_PARSE_PCRE_EXTENDED;
 
-        modifier_flag = 0x1;
-        modifier_char = REPAN_PRIV(modifier_list);
-
-        while (REPAN_TRUE) {
-            if (*modifier_char == REPAN_CHAR_NUL) {
-                if (context->pattern_end < pattern) {
-                    context->error = REPAN_ERR_UNTERMINATED_OPTION_LIST;
-                    context->pattern--;
-                    return;
+            if (modifier_mode != REPAN_MODIFIER_MODE_CLEAR) {
+                if (pattern[0] == REPAN_CHAR_x) {
+                    modifier_flag |= REPAN_PARSE_PCRE_EXTENDED_MORE;
+                    pattern++;
                 }
-
-                context->error = REPAN_ERR_UNKNOWN_OPTION;
-                context->pattern = pattern - 1;
+            }
+            else {
+                modifier_flag |= REPAN_PARSE_PCRE_EXTENDED_MORE;
+            }
+            break;
+        default:
+            if (pattern > context->pattern_end) {
+                context->error = REPAN_ERR_UNTERMINATED_OPTION_LIST;
+                context->pattern--;
                 return;
             }
 
-            if (*modifier_char == current_char) {
-                break;
-            }
-
-            modifier_char++;
-            modifier_flag <<= 1;
+            context->error = REPAN_ERR_UNKNOWN_OPTION;
+            context->pattern = pattern - 1;
+            return;
         }
 
         if (modifier_mode == REPAN_MODIFIER_MODE_CLEAR) {
@@ -809,7 +803,11 @@ void REPAN_PRIV(parse_pcre_bracket)(repan_parser_context *context)
     locals.bracket_command = REPAN_BRACKET_CMD_READ_PATTERN_CONFIG;
 
     locals.current.bracket_start = context->pattern;
-    locals.current.modifiers = 0;
+    locals.current.modifiers = context->options;
+
+    if (locals.current.modifiers & REPAN_PARSE_PCRE_EXTENDED_MORE) {
+        locals.current.modifiers |= REPAN_PARSE_PCRE_EXTENDED;
+    }
 
     while (REPAN_TRUE) {
         locals.current.bracket_node = (repan_bracket_node*)REPAN_PRIV(alloc)(context->result, locals.bracket_size);

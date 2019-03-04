@@ -75,6 +75,33 @@
     Pattern parse failed: Unknown option in (?...) option list
         /a(?i[ HERE ]>>X/
 
+# Global modifiers
+
+/.\N./s
+    print
+    /.(?-s).(?s)./
+
+/^a(?^:b$)/im
+    print
+    /^a(?:(?-i)b(?-m)$)/
+
+/((ab))(cd)/n
+    print
+    /(?:(?:ab))(?:cd)/
+
+/(ab)\g{1}/n
+    print
+    Pattern parse failed: Referenced capturing bracket is non-existing
+        /(ab)\g{[ HERE ]>>1}/
+
+/a b [c d]/x
+    print
+    /ab[c d]/
+
+/a b [c d]/e
+    print
+    /ab[cd]/
+
 # Non-capturing group
 
 /(?n)(ab)(?<name>cd)(ef)\1/

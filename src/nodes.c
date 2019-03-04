@@ -26,11 +26,6 @@
 
 #include "internal.h"
 
-const uint8_t REPAN_PRIV(modifier_list)[] = {
-    /* The x modifier has a separate handler. */
-    REPAN_CHAR_i, REPAN_CHAR_m, REPAN_CHAR_s, REPAN_CHAR_n, REPAN_CHAR_NUL
-};
-
 const uint8_t REPAN_PRIV(perl_class_list)[] = {
     REPAN_CHAR_d, REPAN_CHAR_s, REPAN_CHAR_h, REPAN_CHAR_v,
     REPAN_CHAR_w, REPAN_CHAR_D, REPAN_CHAR_S, REPAN_CHAR_H,

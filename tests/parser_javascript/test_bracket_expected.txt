@@ -46,3 +46,13 @@
     print
     Pattern parse failed: A character allowed in capturing group names is expected
         /(?<\u{2d000}>)(?<a[ HERE ]>>\u{2e2f}>)/
+
+# Global modifiers
+
+/.[^]/J
+    print
+    /.(?s)./
+
+/.[^]/Js
+    print
+    /../

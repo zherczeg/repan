@@ -32,7 +32,7 @@ int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr)
         return REPAN_TRUE;
     }
 
-    if (pattern->options & REPAN_MODE_UTF) {
+    if (pattern->options & REPAN_PARSE_UTF) {
         const repan_u_codepoint *codepoint = REPAN_PRIV(u_get_codepoint)(chr);
 
         return (codepoint->cathegory >= REPAN_UC_Lu && codepoint->cathegory <= REPAN_UC_Lo)
@@ -57,7 +57,7 @@ int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr)
         return REPAN_TRUE;
     }
 
-    if (pattern->options & REPAN_MODE_UTF) {
+    if (pattern->options & REPAN_PARSE_UTF) {
         return (chr | 0x1) == 0x2029;
     }
 

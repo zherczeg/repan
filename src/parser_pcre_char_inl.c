@@ -414,7 +414,7 @@ static void parse_raw_chars(repan_parser_context *context, repan_parser_locals *
 {
     uint32_t *pattern = context->pattern;
     uint32_t *pattern_end = context->pattern_end;
-    uint8_t caseless = (uint8_t)(locals->current.modifiers & REPAN_MODIFIER_CASELESS);
+    uint8_t caseless = (uint8_t)(locals->current.modifiers & REPAN_PARSE_CASELESS);
 
     while (pattern[0] != REPAN_CHAR_BACKSLASH || pattern[1] != REPAN_CHAR_E) {
         if (pattern >= pattern_end) {
@@ -558,7 +558,7 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
 
     context->pattern++;
 
-    if (locals->current.modifiers & REPAN_MODIFIER_EXTENDED) {
+    if (locals->current.modifiers & REPAN_PARSE_PCRE_EXTENDED) {
         if (REPAN_PRIV(is_space)(context->result, current_char)) {
             while (REPAN_PRIV(is_space)(context->result, *context->pattern)) {
                 context->pattern++;
@@ -756,15 +756,15 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
         break;
     case REPAN_CHAR_CIRCUMFLEX_ACCENT:
         node_type = REPAN_ASSERT_CIRCUMFLEX_NODE;
-        node_sub_type = (locals->current.modifiers & REPAN_MODIFIER_MULTILINE) != 0;
+        node_sub_type = (uint8_t)(locals->current.modifiers & REPAN_PARSE_MULTILINE);
         break;
     case REPAN_CHAR_DOLLAR:
         node_type = REPAN_ASSERT_DOLLAR_NODE;
-        node_sub_type = (locals->current.modifiers & REPAN_MODIFIER_MULTILINE) != 0;
+        node_sub_type = (uint8_t)(locals->current.modifiers & REPAN_PARSE_MULTILINE);
         break;
     case REPAN_CHAR_DOT:
         node_type = REPAN_DOT_NODE;
-        node_sub_type = (locals->current.modifiers & REPAN_MODIFIER_DOT_ANY) != 0;
+        node_sub_type = (uint8_t)(locals->current.modifiers & REPAN_PARSE_DOT_ANY);
         break;
     }
 
@@ -783,7 +783,7 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
     if (node_type == REPAN_CHAR_NODE) {
         repan_char_node *char_node = (repan_char_node*)node;
 
-        char_node->caseless = (uint8_t)(locals->current.modifiers & REPAN_MODIFIER_CASELESS);
+        char_node->caseless = (uint8_t)(locals->current.modifiers & REPAN_PARSE_CASELESS);
         char_node->chr = current_char;
     }
 
@@ -797,7 +797,7 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
     repan_char_class_node *char_class_node = REPAN_ALLOC(repan_char_class_node, context->result);
     repan_prev_node *prev_node;
     uint32_t *class_start, *pattern, *pattern_end;
-    uint8_t caseless = (uint8_t)(locals->current.modifiers & REPAN_MODIFIER_CASELESS);
+    uint8_t caseless = (uint8_t)(locals->current.modifiers & REPAN_PARSE_CASELESS);
     int in_range = REPAN_FALSE;
     uint32_t *range_start = NULL;
     uint32_t range_left = 0;
@@ -1001,7 +1001,7 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
                 node_sub_type = (uint8_t)data;
             }
         }
-        else if ((locals->current.modifiers & REPAN_MODIFIER_EXTENDED_MORE)
+        else if ((locals->current.modifiers & REPAN_PARSE_PCRE_EXTENDED_MORE)
                 && (current_char == REPAN_CHAR_SPACE || current_char == REPAN_ESC_t)) {
             continue;
         }

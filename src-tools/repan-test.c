@@ -436,16 +436,39 @@ static int process_commands(test_context *context, const char *data, const char 
             mode = REPAN_TEST_PARSE_PCRE;
 
             while (TRUE) {
+                uint32_t new_option = 0;
+                char new_option_char = '\0';
+                int new_mode = REPAN_TEST_PARSE_PCRE;
+
                 switch (*data) {
                 case 'u':
-                    if (context->options & REPAN_PARSE_UTF) {
-                        print_str(begin, data);
-                        printf("\nError: Duplicated 'u' flag at line %d\n", context->line);
-                        return 1;
-                    }
-                    context->options |= REPAN_PARSE_UTF;
-                    data++;
-                    continue;
+                    new_option = REPAN_PARSE_UTF;
+                    new_option_char = 'u';
+                    break;
+                case 'i':
+                    new_option = REPAN_PARSE_CASELESS;
+                    new_option_char = 'i';
+                    break;
+                case 'm':
+                    new_option = REPAN_PARSE_MULTILINE;
+                    new_option_char = 'm';
+                    break;
+                case 's':
+                    new_option = REPAN_PARSE_DOT_ANY;
+                    new_option_char = 's';
+                    break;
+                case 'n':
+                    new_option = REPAN_PARSE_PCRE_NO_AUTOCAPTURE;
+                    new_option_char = 'n';
+                    break;
+                case 'x':
+                    new_option = REPAN_PARSE_PCRE_EXTENDED;
+                    new_option_char = 'x';
+                    break;
+                case 'e':
+                    new_option = REPAN_PARSE_PCRE_EXTENDED_MORE;
+                    new_option_char = 'e';
+                    break;
                 case '8':
                     if (context->char_size != 0) {
                         print_str(begin, data);
@@ -471,33 +494,42 @@ static int process_commands(test_context *context, const char *data, const char 
                     data += 2;
                     continue;
                 case 'J':
-                    if (mode != REPAN_TEST_PARSE_PCRE) {
-                        print_str(begin, data);
-                        printf("\nError: Duplicatted parsing mode at line %d\n", context->line);
-                        return 1;
-                    }
-                    mode = REPAN_TEST_PARSE_JAVASCRIPT;
-                    data++;
-                    continue;
+                    new_mode = REPAN_TEST_PARSE_JAVASCRIPT;
+                    break;
                 case 'G':
-                    if (mode != REPAN_TEST_PARSE_PCRE) {
+                    new_mode = REPAN_TEST_PARSE_GLOB;
+                    break;
+                case 'O':
+                    if (data[1] == 'B') {
+                        context->options |= REPAN_PARSE_POSIX_BASIC;
+                        data++;
+                    }
+                    new_mode = REPAN_TEST_PARSE_POSIX;
+                    break;
+                }
+
+                if (new_option_char != '\0') {
+                    if (context->options & new_option) {
                         print_str(begin, data);
-                        printf("\nError: Duplicatted parsing mode at line %d\n", context->line);
+                        printf("\nError: Duplicated '%c' flag at line %d\n", new_option_char, context->line);
                         return 1;
                     }
-                    mode = REPAN_TEST_PARSE_GLOB;
-                    data++;
-                    continue;
-                case 'X':
-                    if (mode != REPAN_TEST_PARSE_PCRE) {
-                        print_str(begin, data);
-                        printf("\nError: Duplicatted parsing mode at line %d\n", context->line);
-                        return 1;
-                    }
-                    mode = REPAN_TEST_PARSE_POSIX;
+                    context->options |= new_option;
                     data++;
                     continue;
                 }
+
+                if (new_mode != REPAN_TEST_PARSE_PCRE) {
+                    if (mode != REPAN_TEST_PARSE_PCRE) {
+                        print_str(begin, data);
+                        printf("\nError: Duplicatted parsing mode at line %d\n", context->line);
+                        return 1;
+                    }
+                    mode = new_mode;
+                    data++;
+                    continue;
+                }
+
                 break;
             }
 

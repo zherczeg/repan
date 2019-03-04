@@ -199,29 +199,11 @@ struct repan_pattern_struct {
     repan_block *blocks[REPAN_RESERVED_BLOCK_COUNT];
 };
 
-/* Generic modifiers. */
-/* i */
-#define REPAN_MODIFIER_CASELESS 0x1
-/* m */
-#define REPAN_MODIFIER_MULTILINE 0x2
-/* s */
-#define REPAN_MODIFIER_DOT_ANY 0x4
-
-/* Other options. */
-#define REPAN_MODE_UTF 0x8
-
-/* Parser only modifiers. */
-/* n */
-#define REPAN_MODIFIER_NO_AUTOCAPTURE 0x8
-/* x */
-#define REPAN_MODIFIER_EXTENDED 0x10
-/* xx */
-#define REPAN_MODIFIER_EXTENDED_MORE (0x20 | REPAN_MODIFIER_EXTENDED)
-
 /* To string only modifiers. */
-#define REPAN_MODIFIER_HIDE_BRACKET 0x8
+#define REPAN_MODIFIER_HIDE_BRACKET REPAN_PARSE_PCRE_NO_AUTOCAPTURE
+
+#define REPAN_CORE_OPTIONS (REPAN_PARSE_UTF | REPAN_PARSE_CASELESS | REPAN_PARSE_MULTILINE | REPAN_PARSE_DOT_ANY)
 
 extern const uint8_t REPAN_PRIV(perl_class_list)[];
-extern const uint8_t REPAN_PRIV(modifier_list)[];
 
 #endif /* REPAN_NODES_H */

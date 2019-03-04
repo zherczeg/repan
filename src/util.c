@@ -69,6 +69,8 @@ const char *repan_get_error_message(uint32_t error)
         return "An apostrophe (') is expected";
     case REPAN_ERR_COLON_EXPECTED:
         return "A colon (:) is expected";
+    case REPAN_ERR_BACKSLASH_EXPECTED:
+        return "A backslash (\\) is expected";
     case REPAN_ERR_SIGNED_INTEGER_REQUIRED:
         return "A decimal signed or unsigned integer is required";
     case REPAN_ERR_UNSIGNED_INTEGER_REQUIRED:

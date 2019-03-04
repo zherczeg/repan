@@ -29,3 +29,11 @@
 
 /(?<\u{2d000}>)(?<a\u{2e2f}>)/16uJ
     print
+
+# Global modifiers
+
+/.[^]/J
+    print
+
+/.[^]/Js
+    print

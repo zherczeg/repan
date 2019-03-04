@@ -1,0 +1,33 @@
+# Test posix basic regular expressions
+
+# Only * and [ are metacharacters, the result must be escaped by a backslash
+
+/a*a\*/OB
+    print
+    /a*a\*/
+
+/a[b-d]**e\[f-h]**i/OB
+    print
+    /a(?:[b-d]*)*e\[f-h(?:]*)*i/
+
+/a+a\+b?b\?/OB
+    print
+    /a\+a+b\?b?/
+
+/(aa|bb)\(aa\|bb\)/OB
+    print
+    /\(aa\|bb\)(aa|bb)/
+
+/a{1,2}b\{1,2\}/OB
+    print
+    /a\{1,2}b{1,2}/
+
+/a\{1,2}/OB
+    print
+    Pattern parse failed: A backslash (\) is expected
+        /a\{1,2[ HERE ]>>}/
+
+/a\{1,2\/OB
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /a\{1,2\[ HERE ]>>/

@@ -54,10 +54,7 @@ static void init_parse(repan_parser_context *context, int mode)
     }
 
     memset(context->result, 0, sizeof(repan_pattern));
-
-    if (context->options & REPAN_PARSE_UTF) {
-        context->result->options |= REPAN_MODE_UTF;
-    }
+    context->result->options = context->options & REPAN_CORE_OPTIONS;
 
     switch (mode) {
     case REPAN_PARSE_PCRE:
