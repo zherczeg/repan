@@ -1,0 +1,42 @@
+# Test merge alternatives optimization
+
+/abc|bc|x|ab.|bc./
+    merge_alternatives, print
+    /ab(?:c|.)|bc(?:|.)|x/
+
+/x(abc|bc|x|ab.|bc.)|xy/
+    merge_alternatives, print
+    /x(?:(ab(?:c|.)|bc(?:|.)|x)|y)/
+
+/abcdefgh|abcdefghi/
+    merge_alternatives, print
+    /abcdefgh(?:|i)/
+
+/abcdefgh|.|abcdefghi/
+    merge_alternatives, print
+    /abcdefgh|.|abcdefghi/
+
+/abcdefgh|.|abcdefgh|abcdefghi/
+    merge_alternatives, print
+    /abcdefgh|.|abcdefgh(?:|i)/
+
+/abc|(?i)A(?-i)|abcd/
+    merge_alternatives, print
+    /abc|(?i)A|(?-i)abcd/
+
+/(ab(cd|c)|ab(cd|c))/
+    merge_alternatives, print
+    /(ab(?:(c(?:d|))|(c(?:d|))))/
+
+/(?=abc|ab|abd)/
+    merge_alternatives, print
+    /(?=ab(?:c||d))/
+
+/(?<name>abc|ab.|abc)/
+    merge_alternatives, print
+    /(?<name>ab(?:c|.|c))/
+
+# JavaScript keywords
+/do|if|in|for|let|new|try|var|case|else|enum|null|this|true|void|with|await|break|catch|class|const|false|super|throw|while|yield|delete|export|import|public|return|static|switch|typeof|default|extends|finally|package|private|continue|debugger|function|interface|protected|implements|instanceof/
+    merge_alternatives, print
+    /d(?:o|e(?:lete|fault|bugger))|i(?:f|n(?:|terface|stanceof)|mp(?:ort|lements))|f(?:or|alse|inally|unction)|let|n(?:ew|ull)|t(?:r(?:y|ue)|h(?:is|row)|ypeof)|v(?:ar|oid)|c(?:a(?:se|tch)|lass|on(?:st|tinue))|e(?:lse|num|x(?:port|tends))|w(?:ith|hile)|await|break|s(?:uper|tatic|witch)|yield|p(?:ublic|ackage|r(?:ivate|otected))|return/

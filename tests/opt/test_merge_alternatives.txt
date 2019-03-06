@@ -1,0 +1,32 @@
+# Test merge alternatives optimization
+
+/abc|bc|x|ab.|bc./
+    merge_alternatives, print
+
+/x(abc|bc|x|ab.|bc.)|xy/
+    merge_alternatives, print
+
+/abcdefgh|abcdefghi/
+    merge_alternatives, print
+
+/abcdefgh|.|abcdefghi/
+    merge_alternatives, print
+
+/abcdefgh|.|abcdefgh|abcdefghi/
+    merge_alternatives, print
+
+/abc|(?i)A(?-i)|abcd/
+    merge_alternatives, print
+
+/(ab(cd|c)|ab(cd|c))/
+    merge_alternatives, print
+
+/(?=abc|ab|abd)/
+    merge_alternatives, print
+
+/(?<name>abc|ab.|abc)/
+    merge_alternatives, print
+
+# JavaScript keywords
+/do|if|in|for|let|new|try|var|case|else|enum|null|this|true|void|with|await|break|catch|class|const|false|super|throw|while|yield|delete|export|import|public|return|static|switch|typeof|default|extends|finally|package|private|continue|debugger|function|interface|protected|implements|instanceof/
+    merge_alternatives, print

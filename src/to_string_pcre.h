@@ -47,6 +47,6 @@ typedef struct repan_to_string_context_struct {
     void *result;
 } repan_to_string_context;
 
-void REPAN_PRIV(repan_to_string)(repan_to_string_context *context, char_func count_char, char_func write_char);
+void REPAN_PRIV(repan_to_string_pcre)(repan_to_string_context *context, char_func count_char, char_func write_char);
 
 #endif /* REPAN_SERIALIZE_H */

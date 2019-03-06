@@ -90,6 +90,9 @@ enum {
     REPAN_COND_NAMED_RECURSE_BRACKET,
     REPAN_COND_ASSERT_BRACKET,
     REPAN_COND_DEFINE_BRACKET,
+
+    /* Special constant used by repan_opt_merge_alternatives(). */
+    REPAN_MERGE_ALTERNATIVES_BRACKET,
 };
 
 enum {
@@ -202,7 +205,9 @@ struct repan_pattern_struct {
 /* To string only modifiers. */
 #define REPAN_MODIFIER_HIDE_BRACKET REPAN_PARSE_PCRE_NO_AUTOCAPTURE
 
+/* Pattern option flags. */
 #define REPAN_CORE_OPTIONS (REPAN_PARSE_UTF | REPAN_PARSE_CASELESS | REPAN_PARSE_MULTILINE | REPAN_PARSE_DOT_ANY)
+#define REPAN_PATTERN_DAMAGED 0x00000100
 
 extern const uint8_t REPAN_PRIV(perl_class_list)[];
 

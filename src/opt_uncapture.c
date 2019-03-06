@@ -172,9 +172,6 @@ static uint32_t uncapture(repan_uncapture_context *context, repan_bracket_node *
             continue;
         }
 
-        prev_node = (repan_prev_node*)current.bracket_node;
-        node = prev_node->next_node;
-
         if (current.bracket_node->sub_type == REPAN_CAPTURE_RESET_BRACKET
                 && capture_count < current.capture_max) {
             capture_count = current.capture_max;
@@ -184,6 +181,9 @@ static uint32_t uncapture(repan_uncapture_context *context, repan_bracket_node *
             break;
         }
 
+        prev_node = (repan_prev_node*)current.bracket_node;
+        node = prev_node->next_node;
+
         current = REPAN_STACK_TOP(repan_uncapture_saved_bracket, &context->stack);
         REPAN_PRIV(stack_pop)(&context->stack);
     }
@@ -192,10 +192,14 @@ static uint32_t uncapture(repan_uncapture_context *context, repan_bracket_node *
     return REPAN_SUCCESS;
 }
 
-uint32_t repan_uncapture(repan_pattern *pattern)
+uint32_t repan_opt_uncapture(repan_pattern *pattern, uint32_t options)
 {
     repan_uncapture_context context;
     uint32_t i, count, result;
+
+    if (pattern->options & REPAN_PATTERN_DAMAGED) {
+        return REPAN_ERR_DAMAGED_PATTERN;
+    }
 
     if (pattern->capture_count == 0) {
         return REPAN_SUCCESS;
@@ -206,6 +210,7 @@ uint32_t repan_uncapture(repan_pattern *pattern)
     context.pattern = pattern;
 
     if (context.capture_idx == NULL) {
+        pattern->options |= REPAN_PATTERN_DAMAGED;
         return REPAN_ERR_NO_MEMORY;
     }
 
@@ -223,6 +228,10 @@ uint32_t repan_uncapture(repan_pattern *pattern)
         if (result == REPAN_SUCCESS) {
             pattern->capture_count = count;
         }
+    }
+
+    if (result != REPAN_SUCCESS) {
+        pattern->options |= REPAN_PATTERN_DAMAGED;
     }
 
     free(context.capture_idx);

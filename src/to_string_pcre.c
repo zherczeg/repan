@@ -25,7 +25,7 @@
  */
 
 #include "internal.h"
-#include "to_string.h"
+#include "to_string_pcre.h"
 
 typedef struct {
     repan_bracket_node *bracket_node;
@@ -685,9 +685,14 @@ static void to_string_bracket(repan_to_string_context *context)
     }
 }
 
-void REPAN_PRIV(repan_to_string)(repan_to_string_context *context, char_func count_char, char_func write_char)
+void REPAN_PRIV(repan_to_string_pcre)(repan_to_string_context *context, char_func count_char, char_func write_char)
 {
     void *result;
+
+    if (context->pattern->options & REPAN_PATTERN_DAMAGED) {
+        context->error = REPAN_ERR_DAMAGED_PATTERN;
+        return;
+    }
 
     context->error = REPAN_SUCCESS;
 

@@ -100,12 +100,12 @@ static uint32_t flatten(repan_flatten_context *context, repan_bracket_node *brac
             continue;
         }
 
-        prev_node = (repan_prev_node*)current.bracket_node;
-        node = prev_node->next_node;
-
         if (REPAN_STACK_IS_EMPTY(&context->stack)) {
             break;
         }
+
+        prev_node = (repan_prev_node*)current.bracket_node;
+        node = prev_node->next_node;
 
         current = REPAN_STACK_TOP(repan_flatten_saved_bracket, &context->stack);
         REPAN_PRIV(stack_pop)(&context->stack);
@@ -114,15 +114,23 @@ static uint32_t flatten(repan_flatten_context *context, repan_bracket_node *brac
     return REPAN_SUCCESS;
 }
 
-uint32_t repan_flatten(repan_pattern *pattern)
+uint32_t repan_opt_flatten(repan_pattern *pattern, uint32_t options)
 {
     repan_flatten_context context;
     uint32_t result;
+
+    if (pattern->options & REPAN_PATTERN_DAMAGED) {
+        return REPAN_ERR_DAMAGED_PATTERN;
+    }
 
     REPAN_PRIV(stack_init)(&context.stack, sizeof(repan_flatten_saved_bracket));
     context.pattern = pattern;
 
     result = flatten(&context, pattern->bracket_node);
+
+    if (result != REPAN_SUCCESS) {
+        pattern->options |= REPAN_PATTERN_DAMAGED;
+    }
 
     REPAN_PRIV(stack_free)(&context.stack);
     return result;

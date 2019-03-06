@@ -320,16 +320,23 @@ static int execute_commands(test_context *context, const char *data, const char 
             print_options |= REPAN_TO_STRING_ASCII;
         }
         else if (length == 9 && memcmp(command_start, "uncapture", 9) == 0) {
-            uint32_t error = repan_uncapture(context->pattern);
+            uint32_t error = repan_opt_uncapture(context->pattern, 0);
             if (error != REPAN_SUCCESS) {
                 printf("Uncapture error: %s\n", repan_get_error_message(error));
                 return 0;
             }
         }
         else if (length == 7 && memcmp(command_start, "flatten", 7) == 0) {
-            uint32_t error = repan_flatten(context->pattern);
+            uint32_t error = repan_opt_flatten(context->pattern, 0);
             if (error != REPAN_SUCCESS) {
                 printf("Flatten error: %s\n", repan_get_error_message(error));
+                return 0;
+            }
+        }
+        else if (length == 18 && memcmp(command_start, "merge_alternatives", 18) == 0) {
+            uint32_t error = repan_opt_merge_alternatives(context->pattern, 0);
+            if (error != REPAN_SUCCESS) {
+                printf("Merge prefix error: %s\n", repan_get_error_message(error));
                 return 0;
             }
         }

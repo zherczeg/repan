@@ -33,6 +33,8 @@ const char *repan_get_error_message(uint32_t error)
         return "Operation is completed successfully";
     case REPAN_ERR_NO_MEMORY:
         return "Not enough memory";
+    case REPAN_ERR_DAMAGED_PATTERN:
+        return "The pattern is not usable after an unsuccessful operation and must be freed";
     case REPAN_ERR_CAPTURE_LIMIT:
         return "Too many capturing brackets";
     case REPAN_ERR_LENGTH_LIMIT:

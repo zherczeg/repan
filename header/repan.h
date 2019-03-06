@@ -43,6 +43,7 @@ typedef struct repan_to_string_extra_opts_struct repan_to_string_extra_opts;
 enum {
     REPAN_SUCCESS = 0,
     REPAN_ERR_NO_MEMORY,
+    REPAN_ERR_DAMAGED_PATTERN,
     REPAN_ERR_CAPTURE_LIMIT,
     REPAN_ERR_LENGTH_LIMIT,
     REPAN_ERR_LIST_LIMIT,
@@ -145,8 +146,9 @@ uint16_t *repan_to_string_pcre_u16(repan_pattern *pattern, uint32_t options,
 
 /* Optimizations. */
 
-uint32_t repan_uncapture(repan_pattern *pattern);
-uint32_t repan_flatten(repan_pattern *pattern);
+uint32_t repan_opt_uncapture(repan_pattern *pattern, uint32_t options);
+uint32_t repan_opt_flatten(repan_pattern *pattern, uint32_t options);
+uint32_t repan_opt_merge_alternatives(repan_pattern *pattern, uint32_t options);
 
 /* Other functions. */
 

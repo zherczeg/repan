@@ -25,7 +25,7 @@
  */
 
 #include "internal.h"
-#include "to_string.h"
+#include "to_string_pcre.h"
 
 static void count_char_generic(repan_to_string_context *context, uint32_t chr)
 {
@@ -101,12 +101,12 @@ uint8_t *repan_to_string_pcre_u8(repan_pattern *pattern, uint32_t options,
     if (!(options & REPAN_TO_STRING_UTF)) {
         context.char_max = 0xff;
 
-        REPAN_PRIV(repan_to_string)(&context, count_char_generic, write_char_u8);
+        REPAN_PRIV(repan_to_string_pcre)(&context, count_char_generic, write_char_u8);
     }
     else {
         context.char_max = 0x10ffff;
 
-        REPAN_PRIV(repan_to_string)(&context, count_char_u8_utf, write_char_u8_utf);
+        REPAN_PRIV(repan_to_string_pcre)(&context, count_char_u8_utf, write_char_u8_utf);
     }
 
     if (error != NULL)
@@ -169,12 +169,12 @@ uint16_t *repan_to_string_pcre_u16(repan_pattern *pattern, uint32_t options,
     if (!(options & REPAN_TO_STRING_UTF)) {
         context.char_max = 0xffff;
 
-        REPAN_PRIV(repan_to_string)(&context, count_char_generic, write_char_u16);
+        REPAN_PRIV(repan_to_string_pcre)(&context, count_char_generic, write_char_u16);
     }
     else {
         context.char_max = 0x10ffff;
 
-        REPAN_PRIV(repan_to_string)(&context, count_char_u16_utf, write_char_u16_utf);
+        REPAN_PRIV(repan_to_string_pcre)(&context, count_char_u16_utf, write_char_u16_utf);
     }
 
     if (error != NULL)
