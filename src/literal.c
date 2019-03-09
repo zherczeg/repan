@@ -39,16 +39,20 @@ int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr)
              || codepoint->cathegory == REPAN_UC_Nd;
     }
 
-    if (REPAN_IS_DECIMAL_DIGIT(chr)) {
-        return REPAN_TRUE;
+    if (chr >= pattern->char_tables_max) {
+        return REPAN_FALSE;
     }
 
-    return ((chr | 0x20) >= REPAN_CHAR_a && (chr | 0x20) <= REPAN_CHAR_z);
+    return (pattern->character_types[chr] & REPAN_CTYPE_FLAG_ALNUM) != 0;
 }
 
 int REPAN_PRIV(is_space)(repan_pattern *pattern, uint32_t chr)
 {
-    return (chr == ' ' || chr == '\t') || REPAN_PRIV(is_newline)(pattern, chr);
+    if (chr >= pattern->char_tables_max) {
+        return REPAN_FALSE;
+    }
+
+    return (pattern->character_types[chr] & REPAN_CTYPE_FLAG_SPACE) != 0;
 }
 
 int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr)
@@ -62,6 +66,60 @@ int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr)
     }
 
     return REPAN_FALSE;
+}
+
+const uint32_t *REPAN_PRIV(get_other_cases)(repan_pattern *pattern, uint32_t chr, uint32_t *tmp_buf)
+{
+    uint16_t case_folding_offset;
+    uint32_t other_case_offset;
+
+    if (!(pattern->options & REPAN_PARSE_UTF)) {
+        uint8_t other_case;
+
+        if (chr >= pattern->char_tables_max) {
+            return NULL;
+        }
+
+        other_case = pattern->case_folding[chr];
+        if (other_case == chr) {
+            return NULL;
+        }
+
+        if (chr < other_case) {
+            tmp_buf[0] = chr;
+            tmp_buf[1] = other_case;
+        }
+        else {
+            tmp_buf[0] = other_case;
+            tmp_buf[1] = chr;
+        }
+
+        return tmp_buf;
+    }
+
+    case_folding_offset = REPAN_PRIV(u_get_codepoint)(chr)->case_folding_offset;
+
+    if (case_folding_offset == 0) {
+        return NULL;
+    }
+
+    if (case_folding_offset & 0x1) {
+        return REPAN_PRIV(u_case_folding) + (case_folding_offset >> 1);
+    }
+
+    other_case_offset = REPAN_PRIV(u_case_folding)[case_folding_offset >> 2];
+
+    if (case_folding_offset & 0x2) {
+        tmp_buf[0] = chr - other_case_offset;
+        tmp_buf[1] = chr;
+    }
+    else {
+        tmp_buf[0] = chr;
+        tmp_buf[1] = chr + other_case_offset;
+    }
+
+    tmp_buf[2] = 0;
+    return tmp_buf;
 }
 
 static uint32_t find_list_item(const repan_string_list_item *items, size_t number_of_items,

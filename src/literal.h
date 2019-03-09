@@ -149,6 +149,11 @@ int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr);
 int REPAN_PRIV(is_space)(repan_pattern *pattern, uint32_t chr);
 int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr);
 
+#define REPAN_OTHER_CASE_TMP_BUF_SIZE 3
+
+/* The size of tmp_buf must be greater or equal than REPAN_OTHER_CASE_TMP_MAP_SIZE. */
+const uint32_t *REPAN_PRIV(get_other_cases)(repan_pattern *pattern, uint32_t chr, uint32_t *tmp_buf);
+
 typedef struct {
     /* Lower 24 bit: free to use, higher 8 bit: length.
        Since length cannot be 0, data cannot be 0 as well. */
@@ -222,24 +227,39 @@ enum {
 };
 
 #define REPAN_POSIX_TYPE_MASK 0xff
-#define REPAN_POSIX_OPT_IS_PERL 0x100
+#define REPAN_POSIX_FLAG_SHIFT 8
+#define REPAN_POSIX_OPT_IS_PERL 0x800000
+
+#define REPAN_POSIX_DEFINE_CLASS(name) \
+    (REPAN_POSIX_ ## name | (REPAN_CTYPE_FLAG_ ## name) << REPAN_POSIX_FLAG_SHIFT)
+
+#define REPAN_CTYPE_FLAG_ALNUM \
+    (REPAN_CTYPE_FLAG_DIGIT | REPAN_CTYPE_FLAG_LOWER | REPAN_CTYPE_FLAG_UPPER)
+#define REPAN_CTYPE_FLAG_ALPHA \
+    (REPAN_CTYPE_FLAG_LOWER | REPAN_CTYPE_FLAG_UPPER)
+#define REPAN_CTYPE_FLAG_ASCII \
+    (0)
+#define REPAN_CTYPE_FLAG_BLANK \
+    (0)
+#define REPAN_CTYPE_FLAG_PRINT \
+    (REPAN_CTYPE_FLAG_GRAPH | REPAN_CTYPE_FLAG_SPACE)
 
 /* Order: size, alpha */
 #define REPAN_POSIX_CLASSES(func) \
      func("word", REPAN_POSIX_WORD, REPAN_POSIX_OPT_IS_PERL | REPAN_WORD_CHAR_CLASS) \
-     func("alnum", REPAN_POSIX_ALNUM, REPAN_POSIX_ALNUM) \
-     func("alpha", REPAN_POSIX_ALPHA, REPAN_POSIX_ALPHA) \
-     func("ascii", REPAN_POSIX_ASCII, REPAN_POSIX_ASCII) \
-     func("blank", REPAN_POSIX_BLANK, REPAN_POSIX_BLANK) \
-     func("cntrl", REPAN_POSIX_CNTRL, REPAN_POSIX_CNTRL) \
+     func("alnum", REPAN_POSIX_ALNUM, REPAN_POSIX_DEFINE_CLASS(ALNUM)) \
+     func("alpha", REPAN_POSIX_ALPHA, REPAN_POSIX_DEFINE_CLASS(ALPHA)) \
+     func("ascii", REPAN_POSIX_ASCII, REPAN_POSIX_DEFINE_CLASS(ASCII)) \
+     func("blank", REPAN_POSIX_BLANK, REPAN_POSIX_DEFINE_CLASS(BLANK)) \
+     func("cntrl", REPAN_POSIX_CNTRL, REPAN_POSIX_DEFINE_CLASS(CNTRL)) \
      func("digit", REPAN_POSIX_DIGIT, REPAN_POSIX_OPT_IS_PERL | REPAN_DECIMAL_DIGIT_CLASS) \
-     func("graph", REPAN_POSIX_GRAPH, REPAN_POSIX_GRAPH) \
-     func("lower", REPAN_POSIX_LOWER, REPAN_POSIX_LOWER) \
-     func("print", REPAN_POSIX_PRINT, REPAN_POSIX_PRINT) \
-     func("punct", REPAN_POSIX_PUNCT, REPAN_POSIX_PUNCT) \
+     func("graph", REPAN_POSIX_GRAPH, REPAN_POSIX_DEFINE_CLASS(GRAPH)) \
+     func("lower", REPAN_POSIX_LOWER, REPAN_POSIX_DEFINE_CLASS(LOWER)) \
+     func("print", REPAN_POSIX_PRINT, REPAN_POSIX_DEFINE_CLASS(PRINT)) \
+     func("punct", REPAN_POSIX_PUNCT, REPAN_POSIX_DEFINE_CLASS(PUNCT)) \
      func("space", REPAN_POSIX_SPACE, REPAN_POSIX_OPT_IS_PERL | REPAN_SPACE_CLASS) \
-     func("upper", REPAN_POSIX_UPPER, REPAN_POSIX_UPPER) \
-     func("xdigit", REPAN_POSIX_XDIGIT, REPAN_POSIX_XDIGIT) \
+     func("upper", REPAN_POSIX_UPPER, REPAN_POSIX_DEFINE_CLASS(UPPER)) \
+     func("xdigit", REPAN_POSIX_XDIGIT, REPAN_POSIX_DEFINE_CLASS(XDIGIT)) \
 
 enum {
 #define REPAN_POSIX_CLASS_TYPE(name, type, data) type,
@@ -259,6 +279,7 @@ uint32_t REPAN_PRIV(find_posix_class)(uint32_t *name, size_t length);
 typedef struct {
     uint8_t cathegory;
     uint8_t script;
+    uint16_t case_folding_offset; /* See REPAN_PRIV(u_case_folding). */
 } repan_u_codepoint;
 
 #include "unicode_gen_inl.h"
@@ -280,9 +301,35 @@ REPAN_U_PROPERTIES(REPAN_UNICODE_PROPERT_TYPE)
 REPAN_NEG_U_PROPERTY_CLASS
 };
 
+/* Defined in unicode_gen.c source file. */
+const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr);
+
 extern const repan_string_list_item REPAN_PRIV(u_properties)[];
 uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length);
-const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr);
+
+/* The case_folding_offset member of repan_u_codepoint contains
+   information about case folding.
+
+   When the last bit of repan_u_codepoint is 0:
+       This case is simple case folding.
+       The relative difference of the other case is:
+
+           REPAN_PRIV(u_case_folding)[case_folding_offset >> 2]
+
+       The sign of the relative difference is:
+
+           (case_folding_offset & 0x2) ? -1 : 1
+
+   When the last bit of repan_u_codepoint is 1:
+       This case is multi-character case folding.
+       The zero terminated code point list is:
+
+           REPAN_PRIV(u_case_folding) + (case_folding_offset >> 1)
+
+       The list contains all other case code points including
+       the current code point.
+*/
+extern const uint32_t REPAN_PRIV(u_case_folding)[];
 
 /* The property map contains information about Unicode Properties.
    The start offset of each property is defined as a REPAN_UP_*

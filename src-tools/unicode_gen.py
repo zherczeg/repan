@@ -64,17 +64,17 @@ def add_property(name, description):
 
 codepoints = []
 
-cathegories = { }
+cathegories = {}
 for idx, cathegory in enumerate(general_cathegories):
     cathegories[cathegory] = idx
 
-cathegory_re = re.compile("^([0-9A-F]{4,6});[^;]+;([^;]+);")
-
-last_codepoint = -1
-str_unknown = "Unknown"
-idx_cn = cathegories["Cn"]
-
 with open("UnicodeData.txt") as f:
+    cathegory_re = re.compile("^([0-9A-F]{4,6});([^;]+);([^;]+);")
+    last_codepoint = -1
+    str_unknown = "Unknown"
+    unknown_cp = (cathegories["Cn"], str_unknown, 0)
+    in_block = None
+
     for line in f:
         match_obj = cathegory_re.match(line)
         if match_obj == None:
@@ -86,19 +86,40 @@ with open("UnicodeData.txt") as f:
         if codepoint <= last_codepoint:
             raise Exception("Codepoint order error in UnicodeData.txt: %x -> %x" % (last_codepoint, codepoint))
 
+        cathegory = cathegories.get(match_obj.group(3))
+        if cathegory == None:
+            raise Exception("Unknown cathegory in UnicodeData.txt: %s" % (match_obj.group(3)))
+
+        if in_block:
+            if in_block + "Last>" != match_obj.group(2):
+                raise Exception("Unexpected block terminator: '%s' instead of '%s'"
+                                % (match_obj.group(2), in_block + "Last>"))
+
+            codepoint_tuple = codepoints[-1]
+
+            if codepoint_tuple[0] != cathegory:
+                raise Exception("Block terminator cathegory mismatch: %s instead of %s"
+                                % (general_cathegories[cathegory], general_cathegories[codepoint_tuple[0]]))
+
+            while last_codepoint < codepoint:
+                 codepoints.append(codepoint_tuple)
+                 last_codepoint += 1
+
+            in_block = None;
+            continue
+
         last_codepoint += 1
         while last_codepoint < codepoint:
-            codepoints.append((idx_cn, str_unknown))
+            codepoints.append(unknown_cp)
             last_codepoint += 1
 
-        cathegory = cathegories.get(match_obj.group(2))
-        if cathegory == None:
-            raise Exception("Unknown cathegory in UnicodeData.txt: %s" % (match_obj.group(2)))
+        if match_obj.group(2).endswith("First>"):
+            in_block = match_obj.group(2)[0:-6]
 
-        codepoints.append((cathegory, str_unknown))
+        codepoints.append((cathegory, str_unknown, 0))
 
 while len(codepoints) < 0x110000:
-    codepoints.append((idx_cn, str_unknown))
+    codepoints.append(unknown_cp)
 
 
 # ------------------------------------------------------------------------------
@@ -127,7 +148,7 @@ with open("Scripts.txt") as f:
             codepoint = codepoints[first]
             if codepoint[1] != str_unknown:
                 raise Exception("Codepoint script changed from: %s -> %s" % (codepoint[1], script))
-            codepoints[first] = (codepoint[0], script)
+            codepoints[first] = (codepoint[0], script, 0)
             first += 1
 
 # ------------------------------------------------------------------------------
@@ -288,6 +309,94 @@ get_property_values("ID_Start", "DerivedCoreProperties.txt")
 get_property_values("ID_Continue", "DerivedCoreProperties.txt")
 
 # ------------------------------------------------------------------------------
+#   Simple case folding database
+# ------------------------------------------------------------------------------
+
+case_folding_data = [ 0 ]
+case_folding_data_hex = 0
+
+def get_case_folding_data():
+    global case_folding_data_hex
+
+    derived_re = re.compile("^([0-9A-F]{4,6}); [CS]; ([0-9A-F]{4,6})")
+
+    folding_lists = []
+    cp_map = {}
+
+    with open("CaseFolding.txt") as f:
+        for line in f:
+            match_obj = derived_re.match(line)
+            if match_obj == None:
+                continue
+
+            cp1 = int(match_obj.group(1), 16)
+            cp2 = int(match_obj.group(2), 16)
+
+            idx = cp_map.get(cp1)
+            if idx != None:
+                cp_map[cp2] = idx
+                folding_lists[idx].append(cp2)
+                continue
+
+            idx = cp_map.get(cp2)
+            if idx != None:
+                cp_map[cp1] = idx
+                folding_lists[idx].append(cp1)
+                continue
+
+            idx = len(folding_lists)
+            cp_map[cp1] = idx
+            cp_map[cp2] = idx
+
+            folding_lists.append([cp1, cp2])
+
+    cp_map = {}
+
+    for cp_list in folding_lists:
+        if len(cp_list) != 2:
+            continue
+
+        cp1 = cp_list[0]
+        cp2 = cp_list[1]
+
+        diff = cp2 - cp1
+        sign = 0
+        if diff < 0:
+            diff = -diff
+            sign = 1
+        idx = cp_map.get(diff)
+
+        if idx == None:
+            idx = len(case_folding_data)
+            case_folding_data.append(diff)
+            cp_map[diff] = idx
+
+        codepoint = codepoints[cp1]
+        codepoints[cp1] = (codepoint[0], codepoint[1], (idx << 2) | (sign << 1))
+
+        sign = 1 - sign
+
+        codepoint = codepoints[cp2]
+        codepoints[cp2] = (codepoint[0], codepoint[1], (idx << 2) | (sign << 1))
+
+    case_folding_data_hex = len(case_folding_data)
+
+    for cp_list in folding_lists:
+        if len(cp_list) == 2:
+            continue
+
+        cp_list.sort()
+        idx = len(case_folding_data)
+
+        for cp in cp_list:
+            case_folding_data.append(cp)
+            codepoint = codepoints[cp]
+            codepoints[cp] = (codepoint[0], codepoint[1], (idx << 1) | 1)
+        case_folding_data.append(0)
+
+get_case_folding_data()
+
+# ------------------------------------------------------------------------------
 #   Create unicode_gen.h
 # ------------------------------------------------------------------------------
 
@@ -435,8 +544,8 @@ with open("unicode_gen.c", "w") as f:
                 f.write(",")
             first = False
 
-            f.write("\n    { REPAN_UC_%s, REPAN_US_%s }"
-                    % (general_cathegories[codepoint[0]], codepoint[1].upper()))
+            f.write("\n    { REPAN_UC_%s, REPAN_US_%s, %d }"
+                    % (general_cathegories[codepoint[0]], codepoint[1].upper(), codepoint[2]))
             codepoint_id = next_id
             known[codepoint] = codepoint_id
             next_id += 1
@@ -470,6 +579,30 @@ with open("unicode_gen.c", "w") as f:
         column += len(string)
 
     print("stage1 statistics: %d items, %d bytes" % (len(stage1), len(stage1) * 2))
+
+    f.write("\n};\n\nconst uint32_t REPAN_PRIV(u_case_folding)[] = {\n    /* Relative distances. */")
+
+    column = 100
+    first = True
+    for idx, value in enumerate(case_folding_data):
+        if not first:
+            f.write(",")
+            column += 1
+        first = False
+
+        if idx == case_folding_data_hex:
+            f.write("\n    /* Case folding sets. */\n   ")
+            column = 3
+        elif column >= 100:
+            f.write("\n   ")
+            column = 3
+
+        if idx < case_folding_data_hex:
+            string = " %d" % (value)
+        else:
+            string = " 0x%x" % (value)
+        f.write(string)
+        column += len(string)
 
     f.write("\n};\n\n/* Description of u_property_map can be found in \"literal.h\". */\n")
     f.write("const uint32_t REPAN_PRIV(u_property_map)[] = {\n")

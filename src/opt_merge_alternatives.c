@@ -41,13 +41,21 @@ static uint32_t try_merge(repan_merge_prefix_context *context,
     repan_alt_node *start_alt_node, repan_char_node *char_node)
 {
     uint32_t chr;
+    uint32_t tmp_buf[REPAN_OTHER_CASE_TMP_BUF_SIZE];
+    const uint32_t *other_cases = NULL;
+
     repan_alt_node *alt_node, *prev_alt_node;
     repan_alt_node *merge_prev_alt_node;
 
     REPAN_ASSERT(start_alt_node->next_node == (repan_node*)char_node);
-    REPAN_ASSERT(char_node->type == REPAN_CHAR_NODE && !char_node->caseless);
+    REPAN_ASSERT(char_node->type == REPAN_CHAR_NODE);
 
     chr = char_node->chr;
+
+    if (char_node->caseless) {
+        other_cases = REPAN_PRIV(get_other_cases)(context->pattern, chr, tmp_buf);
+    }
+
     prev_alt_node = start_alt_node;
     alt_node = start_alt_node->next_alt_node;
     merge_prev_alt_node = NULL;
@@ -55,18 +63,47 @@ static uint32_t try_merge(repan_merge_prefix_context *context,
     while (alt_node != NULL) {
         repan_node *node = alt_node->next_node;
         repan_char_node *current_char_node;
+        const uint32_t *current_other_cases = NULL;
+        uint32_t current_chr;
 
         if (node == NULL || node->type != REPAN_CHAR_NODE) {
             break;
         }
 
         current_char_node = (repan_char_node*)node;
+        current_chr = current_char_node->chr;
 
-        if (current_char_node->caseless) {
-            break;
+        if (other_cases != NULL) {
+            current_other_cases = other_cases;
+        }
+        else if (current_char_node->caseless) {
+            current_other_cases = REPAN_PRIV(get_other_cases)(context->pattern, current_chr, tmp_buf);
+            if (current_other_cases != NULL) {
+                current_chr = chr;
+            }
         }
 
-        if (current_char_node->chr != chr) {
+        if (current_other_cases != NULL) {
+            do {
+                if (*current_other_cases == current_chr) {
+                    current_other_cases = NULL;
+                    break;
+                }
+                current_other_cases++;
+            } while (*current_other_cases != 0);
+
+            if (current_other_cases == NULL) {
+                if (other_cases == NULL || !current_char_node->caseless) {
+                    break;
+                }
+            }
+            else {
+                prev_alt_node = alt_node;
+                alt_node = alt_node->next_alt_node;
+                continue;
+            }
+        }
+        else if (current_chr != chr) {
             prev_alt_node = alt_node;
             alt_node = alt_node->next_alt_node;
             continue;
@@ -119,8 +156,8 @@ static uint32_t merge_alternatives(repan_merge_prefix_context *context, repan_br
     while (REPAN_TRUE) {
         repan_bracket_node *bracket_node;
 
-        if (current.prev_node == (repan_prev_node*)current.alt_node && node != NULL
-                && node->type == REPAN_CHAR_NODE && !((repan_char_node*)node)->caseless) {
+        if (current.prev_node == (repan_prev_node*)current.alt_node
+                && node != NULL && node->type == REPAN_CHAR_NODE) {
             uint32_t result = try_merge(context, current.alt_node, (repan_char_node*)node);
 
             if (result != REPAN_SUCCESS) {

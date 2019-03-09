@@ -27,6 +27,15 @@
 /(?<name>abc|ab.|abc)/
     merge_alternatives, print
 
+/abc|(?i)A(?-i)|abcd/
+    merge_alternatives, print
+
+/abcd|abc(?-i)d/i
+    merge_alternatives, print
+
+/ks\xc5|KS\xe5|\x{212a}\x{17f}\x{212b}/iu
+    merge_alternatives, ascii, print
+
 # JavaScript keywords
 /do|if|in|for|let|new|try|var|case|else|enum|null|this|true|void|with|await|break|catch|class|const|false|super|throw|while|yield|delete|export|import|public|return|static|switch|typeof|default|extends|finally|package|private|continue|debugger|function|interface|protected|implements|instanceof/
     merge_alternatives, print
