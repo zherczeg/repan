@@ -197,7 +197,7 @@ struct repan_pattern_struct {
     repan_string *bracket_names;
     repan_string *verb_arguments;
     const uint8_t *case_folding; /* Limit: char_tables_max */
-    const uint16_t *character_types; /* Limit: char_tables_max */
+    const uint32_t *character_types[REPAN_CTYPE_SIZE];
     uint32_t options;
     uint32_t char_tables_max;
     uint32_t capture_count;

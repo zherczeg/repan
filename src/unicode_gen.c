@@ -1858,43 +1858,52 @@ const uint32_t REPAN_PRIV(u_case_folding)[] = {
     0xa64b, 0x0, 0x1e60, 0x1e61, 0x1e9b, 0x0
 };
 
-/* Description of u_property_map can be found in "literal.h". */
-const uint32_t REPAN_PRIV(u_property_map)[] = {
-    /* ANY */ 0x0000001f,
-    /* (-) */ 1,
-    /* (+) */ 1,
-    /* L_AMPERSAND */ 0x00000003,
-    /* (-) */ 1,
-    /* (+) */ 1,
+#define R$ REPAN_RANGE_START
+
+/* Description of u_property_list can be found in "literal.h". */
+const uint32_t REPAN_PRIV(u_property_list)[] = {
+    /* ANY */ 0x3fffffff,
+    /* (-) */ 0,
+    /* (+) */ 0,
+    /* ASSIGNED */ 0x1fffffff,
+    /* (-) */ 0,
+    /* (+) */ 0,
+    /* L_AMPERSAND */ 0x00000007,
+    /* (-) */ 0,
+    /* (+) */ 0,
     /* L */ 0x0000001f,
-    /* (-) */ 1,
-    /* (+) */ 1,
+    /* (-) */ 0,
+    /* (+) */ 0,
     /* M */ 0x000000e0,
-    /* (-) */ 1,
-    /* (+) */ 1,
+    /* (-) */ 0,
+    /* (+) */ 0,
     /* N */ 0x00000700,
-    /* (-) */ 1,
-    /* (+) */ 1,
+    /* (-) */ 0,
+    /* (+) */ 0,
     /* P */ 0x0003f800,
-    /* (-) */ 1,
-    /* (+) */ 1,
+    /* (-) */ 0,
+    /* (+) */ 0,
     /* S */ 0x003c0000,
-    /* (-) */ 1,
-    /* (+) */ 1,
+    /* (-) */ 0,
+    /* (+) */ 0,
     /* Z */ 0x01c00000,
-    /* (-) */ 1,
-    /* (+) */ 1,
+    /* (-) */ 0,
+    /* (+) */ 0,
     /* C */ 0x3e000000,
-    /* (-) */ 1,
-    /* (+) */ 1,
+    /* (-) */ 0,
+    /* (+) */ 0,
+    /* ASCII */ 0x00000000,
+    /* (-) */ 0,
+    /* (+) */ 2, R$ | 0x0, 0x7f,
     /* ID_START */ 0x0000021f,
-    /* (-) */ 4, 0x2e2f, 0x2e2f, 0x110000,
-    /* (+) */ 10, 0x1885, 0x1886, 0x2118, 0x2118, 0x212e, 0x212e, 0x309b, 0x309c, 0x110000,
+    /* (-) */ 1, 0x2e2f,
+    /* (+) */ 6, 0x1885, 0x1886, 0x2118, 0x212e, 0x309b, 0x309c,
     /* ID_CONTINUE */ 0x00000b7f,
-    /* (-) */ 4, 0x2e2f, 0x2e2f, 0x110000,
-    /* (+) */ 16, 0xb7, 0xb7, 0x387, 0x387, 0x1369, 0x1371, 0x19da, 0x19da, 0x2118, 0x2118, 0x212e, 0x212e,
-    0x309b, 0x309c, 0x110000
+    /* (-) */ 1, 0x2e2f,
+    /* (+) */ 9, 0xb7, 0x387, R$ | 0x1369, 0x1371, 0x19da, 0x2118, 0x212e, 0x309b, 0x309c
 };
+
+#undef R$
 
 const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr)
 {

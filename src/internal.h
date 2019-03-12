@@ -62,7 +62,7 @@
 /* These set up the core infrastructure. */
 #include "repan.h"
 #include "alloc.h"
-#include "nodes.h"
 #include "literal.h"
+#include "nodes.h"
 
 #endif /* REPAN_INTERNAL_H */

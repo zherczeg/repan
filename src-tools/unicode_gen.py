@@ -162,10 +162,13 @@ def add_derived_property(name, uppercase_name, include_cathegories):
                        % (name, uppercase_name, uppercase_name))
     cathegory_flags = 0
     for cathegory in include_cathegories:
-        cathegory_flags |= cathegories[cathegory]
+        cathegory_flags |= 1 << cathegories[cathegory]
     property_char_data.append((uppercase_name, cathegory_flags, [], []))
 
 add_derived_property("Any", "ANY", general_cathegories)
+if general_cathegories[-1] != "Cn":
+    raise Exception("Cn must be the last member of general cathegories.")
+add_derived_property("Assigned", "ASSIGNED", general_cathegories[0:-1])
 add_derived_property("L&", "L_AMPERSAND", ["Lu", "Ll", "Lt"])
 
 for cathegory in general_cathegories:
@@ -206,6 +209,20 @@ for codepoint in codepoints:
     cathegory_total[codepoint[0]] += 1;
 
 def get_property_values(name, file_name):
+    def list_append(value_list, start, end):
+        if start == end:
+            value_list.append(start)
+        elif start + 1 == end:
+            value_list.append(start)
+            value_list.append(end)
+        elif start != 0:
+            value_list.append(-start)
+            value_list.append(end)
+        else:
+            # Handling -0.0 is non trivial
+            value_list.append(-0.5)
+            value_list.append(end)
+
     derived_re = re.compile("^([0-9A-F]{4,6})(?:\.\.([0-9A-F]{4,6}))? *; %s " % (name))
 
     cathegory_data = [0] * len(general_cathegories)
@@ -276,27 +293,23 @@ def get_property_values(name, file_name):
             if not is_include:
                 if exclude_end + 1 != codepoint:
                     if exclude_start >= 0:
-                        exclude.append(exclude_start)
-                        exclude.append(exclude_end)
+                        list_append(exclude, exclude_start, exclude_end)
                         sanity_exclude -= exclude_end - exclude_start + 1
                     exclude_start = codepoint
                 exclude_end = codepoint
         elif is_include:
             if include_end + 1 != codepoint:
                 if include_start >= 0:
-                    include.append(include_start)
-                    include.append(include_end)
+                    list_append(include, include_start, include_end)
                     sanity_include -= include_end - include_start + 1
                 include_start = codepoint
             include_end = codepoint
 
     if exclude_start >= 0:
-        exclude.append(exclude_start)
-        exclude.append(exclude_end)
+        list_append(exclude, exclude_start, exclude_end)
         sanity_exclude -= exclude_end - exclude_start + 1
     if include_start >= 0:
-        include.append(include_start)
-        include.append(include_end)
+        list_append(include, include_start, include_end)
         sanity_include -= include_end - include_start + 1
 
     if sanity_exclude != 0 or sanity_include != 0:
@@ -304,6 +317,9 @@ def get_property_values(name, file_name):
                         % (sanity_exclude, sanity_include))
 
     property_char_data.append((name.upper(), cathegory_flags, exclude, include))
+
+add_property(name, "     func(\"ASCII\", REPAN_UC_NAME_ASCII, REPAN_U_DEFINE_PROPERTY(ASCII))")
+property_char_data.append(("ASCII", 0, [], [-0.5, 0x7f]))
 
 get_property_values("ID_Start", "DerivedCoreProperties.txt")
 get_property_values("ID_Continue", "DerivedCoreProperties.txt")
@@ -440,13 +456,7 @@ with open("unicode_gen_inl.h", "w") as f:
     for char_data in property_char_data:
         f.write("    REPAN_UP_%s = %d,\n" % (char_data[0], offset))
 
-        offset += 3
-        length = len(char_data[2])
-        if length > 0:
-            offset += length + 1
-        length = len(char_data[3])
-        if length > 0:
-            offset += length + 1
+        offset += 3 + len(char_data[2]) + len(char_data[3])
     f.write("};\n\n")
 
     print("Size of REPAN_PRIV(u_property_data): %s bytes" % (offset * 4))
@@ -502,26 +512,25 @@ def dump_stage(description, f, stage, step):
 
 def dump_prop_list(f, prop_list, column):
     length = len(prop_list)
-    if length == 0:
-        f.write(" 1")
-        return
+    string = " %d" % (length)
 
-    first = True
-    for idx in range(-1, length + 1):
+    column += len(string)
+    f.write(string)
+
+    for value in prop_list:
+        f.write(",")
+        column += 1
+
         if column >= 100:
-            f.write(",\n   ")
+            f.write("\n   ")
             column = 3
-        elif not first:
-            f.write(",")
-            column += 1
-        first = False
 
-        if idx == -1:
-            string = " %d" % (length + 2)
-        elif idx == length:
-            string = " 0x110000"
+        if value == -0.5:
+            string = " R$ | 0x0"
+        elif value < 0:
+            string = " R$ | 0x%x" % (-value)
         else:
-            string = " 0x%x" % (prop_list[idx])
+            string = " 0x%x" % (value)
 
         column += len(string)
         f.write(string)
@@ -604,8 +613,9 @@ with open("unicode_gen.c", "w") as f:
         f.write(string)
         column += len(string)
 
-    f.write("\n};\n\n/* Description of u_property_map can be found in \"literal.h\". */\n")
-    f.write("const uint32_t REPAN_PRIV(u_property_map)[] = {\n")
+    f.write("\n};\n\n#define R$ REPAN_RANGE_START\n\n")
+    f.write("/* Description of u_property_list can be found in \"literal.h\". */\n")
+    f.write("const uint32_t REPAN_PRIV(u_property_list)[] = {\n")
 
     first = True
 
@@ -619,7 +629,7 @@ with open("unicode_gen.c", "w") as f:
          f.write(",\n    /* (+) */")
          dump_prop_list(f, char_data[3], 13)
 
-    f.write("\n};\n\n")
+    f.write("\n};\n\n#undef R$\n\n")
 
     f.write("const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr)\n")
     f.write("{\n")

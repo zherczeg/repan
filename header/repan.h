@@ -94,14 +94,8 @@ enum {
     REPAN_ERR_GLOB_INVALID_ASTERISK,
 };
 
-#define REPAN_CTYPE_FLAG_CNTRL 0x0001
-#define REPAN_CTYPE_FLAG_DIGIT 0x0002
-#define REPAN_CTYPE_FLAG_GRAPH 0x0004
-#define REPAN_CTYPE_FLAG_LOWER 0x0008
-#define REPAN_CTYPE_FLAG_PUNCT 0x0010
-#define REPAN_CTYPE_FLAG_SPACE 0x0020
-#define REPAN_CTYPE_FLAG_UPPER 0x0040
-#define REPAN_CTYPE_FLAG_XDIGIT 0x0080
+/* The character in a character type array is the start of a range. */
+#define REPAN_RANGE_START 0x80000000u
 
 /* Flags for any repan_parse... functions. */
 #define REPAN_PARSE_UTF 0x00000001

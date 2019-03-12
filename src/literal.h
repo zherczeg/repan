@@ -212,52 +212,56 @@ REPAN_KEYWORDS(REPAN_KEYWORD_TYPE)
 extern const repan_string_list_item REPAN_PRIV(keywords)[];
 uint32_t REPAN_PRIV(find_keyword)(uint32_t *keyword, size_t length);
 
-/* Perl / posix class related data. */
-
 enum {
-    REPAN_DECIMAL_DIGIT_CLASS,
-    REPAN_SPACE_CLASS,
-    REPAN_HORIZONTAL_SPACE_CLASS,
-    REPAN_VERTICAL_SPACE_CLASS,
-    REPAN_WORD_CHAR_CLASS,
+    /* These types are perl class types. */
+    REPAN_CTYPE_DIGIT,
+    REPAN_CTYPE_SPACE,
+    REPAN_CTYPE_HORIZONTAL_SPACE,
+    REPAN_CTYPE_VERTICAL_SPACE,
+    REPAN_CTYPE_WORD,
 
-    /* Negated version of the classes can be constructed
-       by adding REPAN_NEG_PERL_CLASS to the class type. */
-    REPAN_NEG_PERL_CLASS,
+    /* These types are posix class types. */
+    REPAN_CTYPE_ALNUM,
+    REPAN_CTYPE_ALPHA,
+    REPAN_CTYPE_ASCII,
+    REPAN_CTYPE_BLANK,
+    REPAN_CTYPE_CNTRL,
+    REPAN_CTYPE_GRAPH,
+    REPAN_CTYPE_LOWER,
+    REPAN_CTYPE_PRINT,
+    REPAN_CTYPE_PUNCT,
+    REPAN_CTYPE_UPPER,
+    REPAN_CTYPE_XDIGIT,
+
+    /* These types are other class types. */
+    REPAN_CTYPE_NEWLINE,
+
+    REPAN_CTYPE_SIZE,
 };
 
+#define REPAN_NEG_PERL_CLASS (REPAN_CTYPE_WORD + 1)
+
 #define REPAN_POSIX_TYPE_MASK 0xff
-#define REPAN_POSIX_FLAG_SHIFT 8
+#define REPAN_POSIX_CTYPE_SHIFT 8
 #define REPAN_POSIX_OPT_IS_PERL 0x800000
 
 #define REPAN_POSIX_DEFINE_CLASS(name) \
-    (REPAN_POSIX_ ## name | (REPAN_CTYPE_FLAG_ ## name) << REPAN_POSIX_FLAG_SHIFT)
-
-#define REPAN_CTYPE_FLAG_ALNUM \
-    (REPAN_CTYPE_FLAG_DIGIT | REPAN_CTYPE_FLAG_LOWER | REPAN_CTYPE_FLAG_UPPER)
-#define REPAN_CTYPE_FLAG_ALPHA \
-    (REPAN_CTYPE_FLAG_LOWER | REPAN_CTYPE_FLAG_UPPER)
-#define REPAN_CTYPE_FLAG_ASCII \
-    (0)
-#define REPAN_CTYPE_FLAG_BLANK \
-    (0)
-#define REPAN_CTYPE_FLAG_PRINT \
-    (REPAN_CTYPE_FLAG_GRAPH | REPAN_CTYPE_FLAG_SPACE)
+    (REPAN_POSIX_ ## name | (REPAN_CTYPE_ ## name) << REPAN_POSIX_CTYPE_SHIFT)
 
 /* Order: size, alpha */
 #define REPAN_POSIX_CLASSES(func) \
-     func("word", REPAN_POSIX_WORD, REPAN_POSIX_OPT_IS_PERL | REPAN_WORD_CHAR_CLASS) \
+     func("word", REPAN_POSIX_WORD, REPAN_POSIX_OPT_IS_PERL | REPAN_CTYPE_WORD) \
      func("alnum", REPAN_POSIX_ALNUM, REPAN_POSIX_DEFINE_CLASS(ALNUM)) \
      func("alpha", REPAN_POSIX_ALPHA, REPAN_POSIX_DEFINE_CLASS(ALPHA)) \
      func("ascii", REPAN_POSIX_ASCII, REPAN_POSIX_DEFINE_CLASS(ASCII)) \
      func("blank", REPAN_POSIX_BLANK, REPAN_POSIX_DEFINE_CLASS(BLANK)) \
      func("cntrl", REPAN_POSIX_CNTRL, REPAN_POSIX_DEFINE_CLASS(CNTRL)) \
-     func("digit", REPAN_POSIX_DIGIT, REPAN_POSIX_OPT_IS_PERL | REPAN_DECIMAL_DIGIT_CLASS) \
+     func("digit", REPAN_POSIX_DIGIT, REPAN_POSIX_OPT_IS_PERL | REPAN_CTYPE_DIGIT) \
      func("graph", REPAN_POSIX_GRAPH, REPAN_POSIX_DEFINE_CLASS(GRAPH)) \
      func("lower", REPAN_POSIX_LOWER, REPAN_POSIX_DEFINE_CLASS(LOWER)) \
      func("print", REPAN_POSIX_PRINT, REPAN_POSIX_DEFINE_CLASS(PRINT)) \
      func("punct", REPAN_POSIX_PUNCT, REPAN_POSIX_DEFINE_CLASS(PUNCT)) \
-     func("space", REPAN_POSIX_SPACE, REPAN_POSIX_OPT_IS_PERL | REPAN_SPACE_CLASS) \
+     func("space", REPAN_POSIX_SPACE, REPAN_POSIX_OPT_IS_PERL | REPAN_CTYPE_SPACE) \
      func("upper", REPAN_POSIX_UPPER, REPAN_POSIX_DEFINE_CLASS(UPPER)) \
      func("xdigit", REPAN_POSIX_XDIGIT, REPAN_POSIX_DEFINE_CLASS(XDIGIT)) \
 
@@ -331,20 +335,20 @@ uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length);
 */
 extern const uint32_t REPAN_PRIV(u_case_folding)[];
 
-/* The property map contains information about Unicode Properties.
+/* The u_property_list contains information about Unicode Properties.
    The start offset of each property is defined as a REPAN_UP_*
    constant, e.g. REPAN_UP_ID_START. The first uint32 value of each
    map is a general cathegory bitset (REPAN_UC_Lu is bit 0,
    REPAN_UC_Ll is  bit 1, ...) which shows whether the characters of
-   a cathegory should be included or excluded. There are exceptions
-   though, and the exceptions are described as ordered list of ranges.
+   a cathegory should be included or excluded. The bitset is followed
+   by two lists, which have the same format as ctype lists.
    The first list is the exclude list: it contains those characters
    which should be excluded even though their general cathegory is
-   included. The second list called exclude list is the opposite:
+   included. The second list called include list is the opposite:
    it contains those characters which should be included even though
    their general cathegory is excluded.
 */
-extern const uint32_t REPAN_PRIV(u_property_map)[];
+extern const uint32_t REPAN_PRIV(u_property_list)[];
 
 int REPAN_PRIV(u_match_property)(uint32_t chr, uint32_t property);
 

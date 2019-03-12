@@ -26,6 +26,63 @@
 
 #include "internal.h"
 
+static int is_ctype(const uint32_t *ctype_list, uint32_t chr)
+{
+    uint32_t size = *ctype_list;
+    uint32_t left, right, value;
+
+    if (size == 0) {
+        return REPAN_FALSE;
+    }
+
+    ctype_list++;
+    size--;
+
+    left = ctype_list[0] & ~REPAN_RANGE_START;
+    right = ctype_list[size];
+
+    if (chr <= left) {
+        return chr == left;
+    }
+
+    REPAN_ASSERT((right & REPAN_RANGE_START) == 0);
+
+    if (chr >= right) {
+        return chr == right;
+    }
+
+    REPAN_ASSERT(size >= 1);
+
+    left = 0;
+    right = size;
+
+    while (REPAN_TRUE) {
+        uint32_t mid = (left + right) >> 1;
+        uint32_t chr_value;
+
+        REPAN_ASSERT(left < right);
+
+        value = ctype_list[mid];
+        chr_value = value & ~REPAN_RANGE_START;
+
+        if (chr < chr_value) {
+            right = mid;
+            continue;
+        }
+
+        if (chr == chr_value) {
+            return REPAN_TRUE;
+        }
+
+        if (chr >= (ctype_list[mid + 1] & ~REPAN_RANGE_START)) {
+            left = mid + 1;
+            continue;
+        }
+
+        return (value & REPAN_RANGE_START) != 0;
+    }
+}
+
 int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr)
 {
     if (chr == REPAN_CHAR_UNDERSCORE) {
@@ -39,33 +96,21 @@ int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr)
              || codepoint->cathegory == REPAN_UC_Nd;
     }
 
-    if (chr >= pattern->char_tables_max) {
-        return REPAN_FALSE;
-    }
-
-    return (pattern->character_types[chr] & REPAN_CTYPE_FLAG_ALNUM) != 0;
+    return is_ctype(pattern->character_types[REPAN_CTYPE_WORD], chr);
 }
 
 int REPAN_PRIV(is_space)(repan_pattern *pattern, uint32_t chr)
 {
-    if (chr >= pattern->char_tables_max) {
-        return REPAN_FALSE;
-    }
-
-    return (pattern->character_types[chr] & REPAN_CTYPE_FLAG_SPACE) != 0;
+    return is_ctype(pattern->character_types[REPAN_CTYPE_SPACE], chr);
 }
 
 int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr)
 {
-    if ((chr >= 0x0a && chr <= 0x0d) || chr == 0x85) {
-        return REPAN_TRUE;
-    }
-
     if (pattern->options & REPAN_PARSE_UTF) {
-        return (chr | 0x1) == 0x2029;
+        return (chr >= 0x0a && chr <= 0x0d) || chr == 0x85 || (chr | 0x1) == 0x2029;
     }
 
-    return REPAN_FALSE;
+    return is_ctype(pattern->character_types[REPAN_CTYPE_NEWLINE], chr);
 }
 
 const uint32_t *REPAN_PRIV(get_other_cases)(repan_pattern *pattern, uint32_t chr, uint32_t *tmp_buf)
@@ -229,62 +274,63 @@ uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length)
 int REPAN_PRIV(u_match_property)(uint32_t chr, uint32_t property)
 {
     uint32_t cathegory_flag = 1u << (uint32_t)(REPAN_PRIV(u_get_codepoint)(chr)->cathegory);
-    const uint32_t *property_map = REPAN_PRIV(u_property_map) + property + 1;
-    uint32_t left, right;
+    const uint32_t *property_map = REPAN_PRIV(u_property_list) + property + 1;
+    uint32_t size, left, right, value;
 
-    if ((property_map[-1] & cathegory_flag) != 0) {
-        right = property_map[0];
+    if ((property_map[-1] & cathegory_flag) == 0) {
+        property_map += property_map[0] + 1;
+        return is_ctype(property_map, chr);
+    }
 
-        if (right == 1) {
-            return REPAN_TRUE;
-        }
-
-        left = 0;
-        property_map++;
-        right -= 2;
-
-        do {
-            uint32_t mid = ((left + right) >> 1) & ~0x1u;
-
-            if (chr < property_map[mid]) {
-                right = mid;
-            }
-            else if (chr >= property_map[mid + 2]) {
-                left = mid + 2;
-            }
-            else {
-                return chr > property_map[mid + 1];
-            }
-        } while (left < right);
-
+    size = *property_map;
+    if (size == 0) {
         return REPAN_TRUE;
     }
 
-    property_map += property_map[0];
+    property_map++;
+    size--;
 
-    right = property_map[0];
+    left = property_map[0] & ~REPAN_RANGE_START;
+    right = property_map[size];
 
-    if (right == 1) {
-        return REPAN_FALSE;
+    if (chr <= left) {
+        return chr != left;
     }
 
+    REPAN_ASSERT((right & REPAN_RANGE_START) == 0);
+
+    if (chr >= right) {
+        return chr != right;
+    }
+
+    REPAN_ASSERT(size >= 1);
+
     left = 0;
-    property_map++;
-    right -= 2;
+    right = size;
 
-    do {
-        uint32_t mid = ((left + right) >> 1) & ~0x1u;
+    while (REPAN_TRUE) {
+        uint32_t mid = (left + right) >> 1;
+        uint32_t chr_value;
 
-        if (chr < property_map[mid]) {
+        REPAN_ASSERT(left < right);
+
+        value = property_map[mid];
+        chr_value = value & ~REPAN_RANGE_START;
+
+        if (chr < chr_value) {
             right = mid;
+            continue;
         }
-        else if (chr >= property_map[mid + 2]) {
-            left = mid + 2;
-        }
-        else {
-            return chr <= property_map[mid + 1];
-        }
-    } while (left < right);
 
-    return REPAN_FALSE;
+        if (chr == chr_value) {
+            return REPAN_FALSE;
+        }
+
+        if (chr >= (property_map[mid + 1] & ~REPAN_RANGE_START)) {
+            left = mid + 1;
+            continue;
+        }
+
+        return (value & REPAN_RANGE_START) == 0;
+    }
 }

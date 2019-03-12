@@ -614,11 +614,11 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
             break;
         case REPAN_CHAR_d:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_DECIMAL_DIGIT_CLASS;
+            node_sub_type = REPAN_CTYPE_DIGIT;
             break;
         case REPAN_CHAR_D:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_DECIMAL_DIGIT_CLASS;
+            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_DIGIT;
             break;
         case REPAN_CHAR_e:
             current_char = REPAN_ESC_e;
@@ -636,11 +636,11 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
             break;
         case REPAN_CHAR_h:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_HORIZONTAL_SPACE_CLASS;
+            node_sub_type = REPAN_CTYPE_HORIZONTAL_SPACE;
             break;
         case REPAN_CHAR_H:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_HORIZONTAL_SPACE_CLASS;
+            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_HORIZONTAL_SPACE;
             break;
         case REPAN_CHAR_k:
             parse_reference(context, locals);
@@ -671,30 +671,30 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
             break;
         case REPAN_CHAR_s:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_SPACE_CLASS;
+            node_sub_type = REPAN_CTYPE_SPACE;
             break;
         case REPAN_CHAR_S:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_SPACE_CLASS;
+            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_SPACE;
             break;
         case REPAN_CHAR_t:
             current_char = REPAN_ESC_t;
             break;
         case REPAN_CHAR_v:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_VERTICAL_SPACE_CLASS;
+            node_sub_type = REPAN_CTYPE_VERTICAL_SPACE;
             break;
         case REPAN_CHAR_V:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_VERTICAL_SPACE_CLASS;
+            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_VERTICAL_SPACE;
             break;
         case REPAN_CHAR_w:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_WORD_CHAR_CLASS;
+            node_sub_type = REPAN_CTYPE_WORD;
             break;
         case REPAN_CHAR_W:
             node_type = REPAN_PERL_CLASS_NODE;
-            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_WORD_CHAR_CLASS;
+            node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_WORD;
             break;
         case REPAN_CHAR_X:
             node_type = REPAN_GRAPHEME_CLUSTER_NODE;
@@ -873,11 +873,11 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
                 break;
             case REPAN_CHAR_d:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_DECIMAL_DIGIT_CLASS;
+                node_sub_type = REPAN_CTYPE_DIGIT;
                 break;
             case REPAN_CHAR_D:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_DECIMAL_DIGIT_CLASS;
+                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_DIGIT;
                 break;
             case REPAN_CHAR_e:
                 current_char = REPAN_ESC_e;
@@ -887,11 +887,11 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
                 break;
             case REPAN_CHAR_h:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_HORIZONTAL_SPACE_CLASS;
+                node_sub_type = REPAN_CTYPE_HORIZONTAL_SPACE;
                 break;
             case REPAN_CHAR_H:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_HORIZONTAL_SPACE_CLASS;
+                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_HORIZONTAL_SPACE;
                 break;
             case REPAN_CHAR_n:
                 current_char = REPAN_ESC_n;
@@ -913,30 +913,30 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
                 break;
             case REPAN_CHAR_s:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_SPACE_CLASS;
+                node_sub_type = REPAN_CTYPE_SPACE;
                 break;
             case REPAN_CHAR_S:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_SPACE_CLASS;
+                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_SPACE;
                 break;
             case REPAN_CHAR_t:
                 current_char = REPAN_ESC_t;
                 break;
             case REPAN_CHAR_v:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_VERTICAL_SPACE_CLASS;
+                node_sub_type = REPAN_CTYPE_VERTICAL_SPACE;
                 break;
             case REPAN_CHAR_V:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_VERTICAL_SPACE_CLASS;
+                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_VERTICAL_SPACE;
                 break;
             case REPAN_CHAR_w:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_WORD_CHAR_CLASS;
+                node_sub_type = REPAN_CTYPE_WORD;
                 break;
             case REPAN_CHAR_W:
                 node_type = REPAN_PERL_CLASS_NODE;
-                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_WORD_CHAR_CLASS;
+                node_sub_type = REPAN_NEG_PERL_CLASS + REPAN_CTYPE_WORD;
                 break;
             case REPAN_CHAR_N:
                 if (pattern[0] != REPAN_CHAR_LEFT_BRACE) {
