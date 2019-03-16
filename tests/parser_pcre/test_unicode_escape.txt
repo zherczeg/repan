@@ -1,0 +1,41 @@
+# Test unicode escape sequences
+
+# Unicode property support
+
+/\pL\p{L}\P{Cc}\p{L&}\p{SignWriting}/u
+    print
+
+/\pA/u
+    print
+
+/\p{Unknown}/u
+    print
+
+/\p#/u
+    print
+
+/\p{Unk!nown}/u
+    print
+
+# Unicode name support
+
+/\N{MAR   Chen-LET --- teRA}\N{ma  -RCHENLETTER-A}\N{marchenletTer   -a}/u
+    ascii, print
+
+/\N{hanGU LJUNGSE  ONG--OE}\N{H-A N G-U L J U N-G S E O N G O-  E}/u
+    ascii, print
+
+/\N{LAT-I  N SmALl -  - LETTER--N}\N{VARIATION SELECTOR 256}/
+    ascii, print
+
+/\N{A- B -A  Cu-S}\N{Z-o M--b  I  - -e}/u
+    ascii, print
+
+/\N{ZOMBIEE}/u
+    print
+
+/\N{a+b}/u
+    print
+
+/\N{zombie/u
+    print

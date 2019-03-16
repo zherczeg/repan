@@ -20,3 +20,11 @@
 
 /(ab)(?n:(cd)(ef))(gh)/
     flatten, print
+
+# Remove empty alternatives
+
+/(?:|||a||||b|c||d)/
+    flatten, print
+
+/(||||||)/
+    flatten, print

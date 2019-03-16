@@ -714,9 +714,13 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
             /* \N{U+xxxx} */
             if (context->pattern[1] != REPAN_CHAR_U
                     || context->pattern[2] != REPAN_CHAR_PLUS) {
-                context->error = REPAN_ERR_UNICODE_NAMES_NOT_SUPPORTED;
-                context->pattern -= 2;
-                return;
+                context->pattern++;
+                current_char = REPAN_PRIV(u_parse_name)(context);
+
+                if (context->error != REPAN_SUCCESS) {
+                    return;
+                }
+                break;
             }
             context->pattern += 2;
             /* Fallthrough. */
@@ -866,7 +870,7 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
                 }
 
                 if (REPAN_IS_LOWERCASE_LATIN(current_char)) {
-                    current_char -= REPAN_CHAR_a - REPAN_CHAR_A;
+                    current_char = REPAN_TO_UPPERCASE_LATIN(current_char);
                 }
 
                 current_char ^= 0x40;
@@ -948,9 +952,14 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
                 /* \N{U+xxxx} */
                 if (pattern[1] != REPAN_CHAR_U
                         || pattern[2] != REPAN_CHAR_PLUS) {
-                    context->error = REPAN_ERR_UNICODE_NAMES_NOT_SUPPORTED;
-                    context->pattern = pattern - 2;
-                    return;
+                    context->pattern = pattern + 1;
+                    current_char = REPAN_PRIV(u_parse_name)(context);
+
+                    if (context->error != REPAN_SUCCESS) {
+                        return;
+                    }
+                    pattern = context->pattern;
+                    break;
                 }
                 pattern += 2;
             /* Fallthrough. */

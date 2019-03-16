@@ -71,9 +71,6 @@
 /\N{U+0010ffff}\N{U+110000}/u
     print
 
-/\N{Latin Capital letter A}/u
-    print
-
 # \Q...\E sequence
 
 /a\Q+?*{^$.\([\Ec/
@@ -138,21 +135,4 @@
     print
 
 /\o{160000}\o{157777}d/16u
-    print
-
-# Unicode property support
-
-/\pL\p{L}\P{Cc}\p{L&}\p{SignWriting}/
-    print
-
-/\pA/
-    print
-
-/\p{Unknown}/
-    print
-
-/\p#/
-    print
-
-/\p{Unk!nown}/
     print

@@ -61,5 +61,6 @@ uint32_t REPAN_PRIV(parse_decimal)(uint32_t **pattern_ref);
 uint32_t REPAN_PRIV(parse_posix_class)(uint32_t **pattern_start);
 int REPAN_PRIV(parse_repeat)(repan_parser_context *context,
     repan_node **last_node_ref, repan_prev_node **prev_node_ref);
+uint32_t REPAN_PRIV(u_parse_name)(repan_parser_context *context);
 
 #endif /* REPAN_PARSER_H */

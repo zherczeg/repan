@@ -98,11 +98,6 @@
     Pattern parse failed: Character value is too large
         /\N{U+0010ffff}[ HERE ]>>\N{U+110000}/
 
-/\N{Latin Capital letter A}/u
-    print
-    Pattern parse failed: Unicode codepoint names are not supported
-        /[ HERE ]>>\N{Latin Capital letter A}/
-
 # \Q...\E sequence
 
 /a\Q+?*{^$.\([\Ec/
@@ -197,29 +192,3 @@
     print
     Pattern parse failed: Invalid UTF character
         /\o{160000}[ HERE ]>>\o{157777}d/
-
-# Unicode property support
-
-/\pL\p{L}\P{Cc}\p{L&}\p{SignWriting}/
-    print
-    /\p{L}\p{L}\P{Cc}\p{L&}\p{SignWriting}/
-
-/\pA/
-    print
-    Pattern parse failed: Unknown \p or \P property
-        /[ HERE ]>>\pA/
-
-/\p{Unknown}/
-    print
-    Pattern parse failed: Unknown \p or \P property
-        /[ HERE ]>>\p{Unknown}/
-
-/\p#/
-    print
-    Pattern parse failed: A valid property letter or property name in {...} required after \p or \P
-        /[ HERE ]>>\p#/
-
-/\p{Unk!nown}/
-    print
-    Pattern parse failed: A right brace (}) is expected
-        /\p{Unk[ HERE ]>>!nown}/

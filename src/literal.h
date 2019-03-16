@@ -145,6 +145,9 @@
 #define REPAN_IS_LOWERCASE_LATIN(chr) \
     ((chr) >= REPAN_CHAR_a && (chr) <= REPAN_CHAR_z)
 
+#define REPAN_TO_UPPERCASE_LATIN(chr) \
+    ((chr) - (REPAN_CHAR_a - REPAN_CHAR_A))
+
 int REPAN_PRIV(is_word_char)(repan_pattern *pattern, uint32_t chr);
 int REPAN_PRIV(is_space)(repan_pattern *pattern, uint32_t chr);
 int REPAN_PRIV(is_newline)(repan_pattern *pattern, uint32_t chr);
@@ -351,5 +354,12 @@ extern const uint32_t REPAN_PRIV(u_case_folding)[];
 extern const uint32_t REPAN_PRIV(u_property_list)[];
 
 int REPAN_PRIV(u_match_property)(uint32_t chr, uint32_t property);
+
+#define REPAN_U_MAX_NAME_LENGTH (127 + 1)
+
+extern const uint8_t REPAN_PRIV(u_name_data)[];
+extern const uint32_t REPAN_PRIV(u_name_offsets)[];
+
+uint32_t REPAN_PRIV(u_find_name)(const uint8_t *name);
 
 #endif /* REPAN_LITERAL_H */

@@ -1,0 +1,60 @@
+# Test unicode escape sequences
+
+# Unicode property support
+
+/\pL\p{L}\P{Cc}\p{L&}\p{SignWriting}/u
+    print
+    /\p{L}\p{L}\P{Cc}\p{L&}\p{SignWriting}/
+
+/\pA/u
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\pA/
+
+/\p{Unknown}/u
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\p{Unknown}/
+
+/\p#/u
+    print
+    Pattern parse failed: A valid property letter or property name in {...} required after \p or \P
+        /[ HERE ]>>\p#/
+
+/\p{Unk!nown}/u
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /\p{Unk[ HERE ]>>!nown}/
+
+# Unicode name support
+
+/\N{MAR   Chen-LET --- teRA}\N{ma  -RCHENLETTER-A}\N{marchenletTer   -a}/u
+    ascii, print
+    /\x{11c8f}\x{11c88}\x{11c88}/
+
+/\N{hanGU LJUNGSE  ONG--OE}\N{H-A N G-U L J U N-G S E O N G O-  E}/u
+    ascii, print
+    /\x{116c}\x{1180}/
+
+/\N{LAT-I  N SmALl -  - LETTER--N}\N{VARIATION SELECTOR 256}/
+    ascii, print
+    /n\x{e01ef}/
+
+/\N{A- B -A  Cu-S}\N{Z-o M--b  I  - -e}/u
+    ascii, print
+    /\x{1f9ee}\x{1f9df}/
+
+/\N{ZOMBIEE}/u
+    print
+    Pattern parse failed: Unknown unicode codepoint name
+        /\N{[ HERE ]>>ZOMBIEE}/
+
+/\N{a+b}/u
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /\N{a[ HERE ]>>+b}/
+
+/\N{zombie/u
+    print
+    Pattern parse failed: A right brace (}) is expected
+        /\N{zombie[ HERE ]>>/

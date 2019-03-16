@@ -121,8 +121,8 @@ const char *repan_get_error_message(uint32_t error)
         return "Unterminated option list";
     case REPAN_ERR_INVALID_HYPEN_IN_OPTION_LIST:
         return "Invalid hypen in option list";
-    case REPAN_ERR_UNICODE_NAMES_NOT_SUPPORTED:
-        return "Unicode codepoint names are not supported";
+    case REPAN_ERR_INVALID_UNICODE_CODEPOINT_NAME:
+        return "Unknown unicode codepoint name";
     case REPAN_ERR_UNTERMINATED_RAW_CHARS:
         return "Unterminated \\Q...\\E sequence";
     case REPAN_ERR_UNTERMINATED_COMMENT:

@@ -334,3 +334,163 @@ int REPAN_PRIV(u_match_property)(uint32_t chr, uint32_t property)
         return (value & REPAN_RANGE_START) == 0;
     }
 }
+
+/*
+  Result:
+     -2: name is less than target_name
+     -1: name is greater than target_name
+      0: equal
+*/
+static int32_t u_compare_name(const uint8_t *name, const uint8_t *target_name)
+{
+    while (REPAN_TRUE) {
+        if (*name == REPAN_CHAR_EQUALS_SIGN) {
+            switch (*target_name) {
+            case REPAN_CHAR_EQUALS_SIGN:
+                target_name++;
+                break;
+            case REPAN_CHAR_COLON:
+                return -1;
+            }
+            name++;
+            continue;
+        }
+        else {
+            switch (*target_name) {
+            case REPAN_CHAR_EQUALS_SIGN:
+                return -2;
+            case REPAN_CHAR_COLON:
+                target_name++;
+                continue;
+            }
+        }
+
+        if (*name != *target_name) {
+            return -1 - (*name < *target_name);
+        }
+        if (*name == REPAN_CHAR_NUL) {
+            return 0;
+        }
+        name++;
+        target_name++;
+    }
+}
+
+#define REPAN_READ_BITS(len) \
+    REPAN_ASSERT(len > 0 && len <= 8); \
+    value = bit_buffer & ((1 << len) - 1); \
+    bit_buffer >>= len; \
+    remaining_bits -= len; \
+    if (remaining_bits < 8) { \
+        bit_buffer |= (uint32_t)(*src++) << remaining_bits; \
+        remaining_bits += 8; \
+    }
+
+static int32_t u_decode_block(const uint8_t *name, uint32_t block_index, int decode_count)
+{
+    uint8_t current_name[REPAN_U_MAX_NAME_LENGTH];
+    const uint8_t *src = REPAN_PRIV(u_name_data) + REPAN_PRIV(u_name_offsets)[block_index];
+    uint32_t bit_buffer = *src++;
+    uint32_t remaining_bits = 8;
+    int first = REPAN_TRUE;
+    uint8_t *dst;
+
+    do {
+        uint32_t value, codepoint;
+        int result;
+
+        dst = current_name;
+
+        if (!first) {
+            REPAN_READ_BITS(6);
+            dst += value;
+        }
+        first = REPAN_FALSE;
+
+        while (REPAN_TRUE) {
+            REPAN_READ_BITS(5);
+            if (value < 26) {
+                *dst++ = (uint8_t)(value + REPAN_CHAR_A);
+                continue;
+            }
+            switch (value) {
+            case 26:
+                *dst++ = REPAN_CHAR_0;
+                continue;
+            case 27:
+                *dst++ = REPAN_CHAR_1;
+                continue;
+            case 28:
+                REPAN_READ_BITS(3);
+                *dst++ = (uint8_t)(value + REPAN_CHAR_2);
+                continue;
+            case 29:
+                *dst++ = REPAN_CHAR_COLON;
+                continue;
+            case 30:
+                *dst++ = REPAN_CHAR_EQUALS_SIGN;
+                continue;
+            }
+            break;
+        }
+
+        if (dst == current_name) {
+            return -2;
+        }
+
+        *dst = REPAN_CHAR_NUL;
+
+        codepoint = 0;
+        do {
+            REPAN_READ_BITS(7);
+            codepoint = (codepoint << 7) | value;
+
+            REPAN_READ_BITS(1);
+        } while (value != 0);
+
+        result = u_compare_name(name, current_name);
+        if (result == 0) {
+            return codepoint;
+        }
+        if (result == -2) {
+            return -2;
+        }
+    } while (--decode_count > 0);
+
+    return -1;
+}
+
+uint32_t REPAN_PRIV(u_find_name)(const uint8_t *name)
+{
+    uint32_t left = 0;
+    uint32_t right = REPAN_U_NAME_OFFSETS_SIZE;
+    int32_t result;
+
+    while (REPAN_TRUE) {
+        uint32_t mid = (left + right) >> 1;
+        int decode_count = (left + 1 >= right) ? REPAN_U_NAME_BLOCK_SIZE : 1;
+
+        REPAN_ASSERT(left < right);
+
+        result = u_decode_block(name, mid, decode_count);
+
+        REPAN_ASSERT(result >= -2 && result < 0x110000);
+
+        if (result >= 0) {
+            return result;
+        }
+
+        if (decode_count != 1) {
+            return UINT32_MAX;
+        }
+
+        REPAN_ASSERT(left + 2 <= right);
+
+        if (result == -2) {
+            right = mid;
+        }
+        else {
+            left = mid;
+        }
+    }
+}

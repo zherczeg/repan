@@ -36,6 +36,35 @@ typedef struct {
     repan_stack stack;
 } repan_flatten_context;
 
+static void remove_alternatives(repan_flatten_context *context, repan_bracket_node *bracket_node)
+{
+    repan_alt_node *prev_alt_node = &bracket_node->alt_node_list;
+    int was_empty = (prev_alt_node->next_node == NULL);
+    repan_alt_node *alt_node = prev_alt_node->next_alt_node;
+
+    while (alt_node != NULL) {
+        if (alt_node->next_node == NULL) {
+            if (was_empty) {
+                repan_alt_node *next_alt_node = alt_node->next_alt_node;
+
+                REPAN_PRIV(free)(context->pattern, alt_node, sizeof(repan_alt_node));
+
+                prev_alt_node->next_alt_node = next_alt_node;
+                alt_node = next_alt_node;
+                continue;
+            }
+
+            was_empty = REPAN_TRUE;
+        }
+        else {
+            was_empty = REPAN_FALSE;
+        }
+
+        prev_alt_node = alt_node;
+        alt_node = alt_node->next_alt_node;
+    }
+}
+
 static uint32_t flatten(repan_flatten_context *context, repan_bracket_node *bracket_node)
 {
     repan_flatten_saved_bracket current;
@@ -53,6 +82,8 @@ static uint32_t flatten(repan_flatten_context *context, repan_bracket_node *brac
 
             if (node->type == REPAN_BRACKET_NODE) {
                 bracket_node = (repan_bracket_node*)node;
+
+                remove_alternatives(context, bracket_node);
 
                 if (bracket_node->sub_type == REPAN_NON_CAPTURING_BRACKET
                         && bracket_node->alt_node_list.next_alt_node == NULL

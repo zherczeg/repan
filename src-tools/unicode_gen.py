@@ -63,64 +63,216 @@ def add_property(name, description):
 # ------------------------------------------------------------------------------
 
 codepoints = []
+codepoint_name_block_size = 16
+codepoint_name_data = []
+codepoint_name_offsets = []
 
 cathegories = {}
 for idx, cathegory in enumerate(general_cathegories):
     cathegories[cathegory] = idx
 
-with open("UnicodeData.txt") as f:
-    cathegory_re = re.compile("^([0-9A-F]{4,6});([^;]+);([^;]+);")
-    last_codepoint = -1
-    str_unknown = "Unknown"
-    unknown_cp = (cathegories["Cn"], str_unknown, 0)
-    in_block = None
+def parse_unicode_data():
+    codepoint_names = []
 
-    for line in f:
-        match_obj = cathegory_re.match(line)
-        if match_obj == None:
-            raise Exception("Invalid record in UnicodeData.txt: %s" % (line))
+    with open("UnicodeData.txt") as f:
+        cathegory_re = re.compile("^([0-9A-F]{4,6});([^;]+);([^;]+);")
+        name_re = re.compile("^(?:[A-Z0-9]|-(?!-))+$")
+        last_codepoint = -1
+        str_unknown = "Unknown"
+        unknown_cp = (cathegories["Cn"], str_unknown, 0)
+        in_block = None
+        names = {}
 
-        codepoint = int(match_obj.group(1), 16)
-        if codepoint >= 0x110000:
-            raise Exception("Codepoint too big: 0x%x" % (codepoint))
-        if codepoint <= last_codepoint:
-            raise Exception("Codepoint order error in UnicodeData.txt: %x -> %x" % (last_codepoint, codepoint))
+        for line in f:
+            match_obj = cathegory_re.match(line)
+            if match_obj == None:
+                raise Exception("Invalid record in UnicodeData.txt: %s" % (line))
 
-        cathegory = cathegories.get(match_obj.group(3))
-        if cathegory == None:
-            raise Exception("Unknown cathegory in UnicodeData.txt: %s" % (match_obj.group(3)))
+            codepoint = int(match_obj.group(1), 16)
+            if codepoint >= 0x110000:
+                raise Exception("Codepoint too big: 0x%x" % (codepoint))
+            if codepoint <= last_codepoint:
+                raise Exception("Codepoint order error in UnicodeData.txt: %x -> %x" % (last_codepoint, codepoint))
 
-        if in_block:
-            if in_block + "Last>" != match_obj.group(2):
-                raise Exception("Unexpected block terminator: '%s' instead of '%s'"
-                                % (match_obj.group(2), in_block + "Last>"))
+            cathegory = cathegories.get(match_obj.group(3))
+            if cathegory == None:
+                raise Exception("Unknown cathegory in UnicodeData.txt: %s" % (match_obj.group(3)))
 
-            codepoint_tuple = codepoints[-1]
+            if in_block:
+                if in_block + "Last>" != match_obj.group(2):
+                    raise Exception("Unexpected block terminator: '%s' instead of '%s'"
+                                    % (match_obj.group(2), in_block + "Last>"))
 
-            if codepoint_tuple[0] != cathegory:
-                raise Exception("Block terminator cathegory mismatch: %s instead of %s"
-                                % (general_cathegories[cathegory], general_cathegories[codepoint_tuple[0]]))
+                codepoint_tuple = codepoints[-1]
 
+                if codepoint_tuple[0] != cathegory:
+                    raise Exception("Block terminator cathegory mismatch: %s instead of %s"
+                                    % (general_cathegories[cathegory], general_cathegories[codepoint_tuple[0]]))
+
+                while last_codepoint < codepoint:
+                     codepoints.append(codepoint_tuple)
+                     last_codepoint += 1
+
+                in_block = None;
+                continue
+
+            last_codepoint += 1
             while last_codepoint < codepoint:
-                 codepoints.append(codepoint_tuple)
-                 last_codepoint += 1
+                codepoints.append(unknown_cp)
+                last_codepoint += 1
 
-            in_block = None;
+            name = match_obj.group(2)
+
+            if name.endswith("First>"):
+                in_block = match_obj.group(2)[0:-6]
+            elif not name.startswith("<"):
+                name = name.replace(" ", "")
+
+                if name_re.match(name) == None:
+                    raise Exception("Invalid character name: %s" % (name))
+
+                if len(name) > 127:
+                    raise Exception("Name limit reached (increase REPAN_U_MAX_NAME_LENGTH in literal.h): %s" % (name))
+
+                name_no_hypen = name.replace("-", "")
+
+                if name_no_hypen in names:
+                    names[name_no_hypen].extend([name, codepoint])
+                else:
+                    names[name_no_hypen] = [name, codepoint]
+
+            codepoints.append((cathegory, str_unknown, 0))
+
+    while len(codepoints) < 0x110000:
+        codepoints.append(unknown_cp)
+
+    for name, values in names.items():
+        if len(values) == 2:
+            codepoint_names.append((name, values[1]))
             continue
 
-        last_codepoint += 1
-        while last_codepoint < codepoint:
-            codepoints.append(unknown_cp)
-            last_codepoint += 1
+        if len(values) > 4:
+            raise Exception("More than two items with hypen differences are not supported")
 
-        if match_obj.group(2).endswith("First>"):
-            in_block = match_obj.group(2)[0:-6]
+        if len(values[0]) < len(values[2]):
+            name1 = values[0]
+            cp1 = values[1]
+            name2 = values[2]
+            cp2 = values[3]
+        else:
+            name1 = values[2]
+            cp1 = values[3]
+            name2 = values[0]
+            cp2 = values[1]
 
-        codepoints.append((cathegory, str_unknown, 0))
+        if name1.find("-") != -1 or len(name1) + 1 != len(name2):
+            raise Exception("Multiple hypens are not supported (yet)")
 
-while len(codepoints) < 0x110000:
-    codepoints.append(unknown_cp)
+        idx = name2.find("-")
+        if idx == -1:
+            raise Exception("Hypen is not present")
 
+        codepoint_names.append((name2.replace("-", ":"), cp1))
+        codepoint_names.append((name2.replace("-", "="), cp2))
+
+    codepoint_names.sort(key=lambda tup: tup[0])
+
+    idx = 0
+    last = len(codepoint_names)
+    ord_2 = ord("2")
+    ord_9 = ord("9")
+    ord_A = ord("A")
+    ord_Z = ord("Z")
+
+    if last % codepoint_name_block_size != 0:
+        codepoint_names.append(("", 0))
+        last += 1
+
+    byte_buffer = [0, 0]
+
+    # bit_length max is 8
+    def push(value, bit_length):
+        if bit_length > 8 or value >= (1 << bit_length):
+            raise Exception("Internal error: push byte")
+
+        byte_buffer[0] |= value << byte_buffer[1]
+        byte_buffer[1] += bit_length
+        if byte_buffer[1] >= 8:
+            codepoint_name_data.append(byte_buffer[0] & 0xff)
+            byte_buffer[0] >>= 8
+            byte_buffer[1] -= 8
+
+    while idx < last:
+        name = codepoint_names[idx][0]
+        prefix = 0
+
+        if idx % codepoint_name_block_size == 0:
+            if byte_buffer[1] > 0:
+                codepoint_name_data.append(byte_buffer[0])
+                byte_buffer = [0, 0]
+
+            codepoint_name_offsets.append(len(codepoint_name_data))
+        else:
+            length = min(len(name), len(prev_name), 63)
+
+            while prefix < length:
+                if name[prefix] != prev_name[prefix]:
+                    break
+                prefix += 1
+
+            push(prefix, 6)
+
+        prev_name = name
+        length = len(name)
+        for ch_idx in range(prefix, length):
+            ch = name[ch_idx]
+            if ch == "0":
+                push(26, 5)
+                continue
+            if ch == "1":
+                push(27, 5)
+                continue
+            if ch == ":":
+                push(29, 5)
+                continue
+            if ch == "=":
+                push(30, 5)
+                continue
+
+            ch = ord(ch)
+            if ch >= ord_2 and ch <= ord_9:
+                push(28, 5)
+                push(ch - ord_2, 3)
+                continue
+
+            if ch < ord_A or ch > ord_Z:
+                raise Exception("Internal error: encode name")
+            push(ch - ord_A, 5)
+
+        push(31, 5)
+
+        value = codepoint_names[idx][1]
+
+        shift = 0
+        while value >= 1 << (shift + 7):
+            shift += 7
+
+        while True:
+            push((value >> shift) & 0x7f, 7)
+
+            if shift == 0:
+                push(0, 1)
+                break
+
+            push(1, 1)
+            shift -= 7
+
+        idx += 1
+
+    if byte_buffer[1] > 0:
+        codepoint_name_data.append(byte_buffer[0])
+
+parse_unicode_data()
 
 # ------------------------------------------------------------------------------
 #   Parse Scripts.txt
@@ -128,28 +280,33 @@ while len(codepoints) < 0x110000:
 
 script_re = re.compile("^([0-9A-F]{4,6})(?:\.\.([0-9A-F]{4,6}))? *; ([A-Za-z_]+) ")
 
-with open("Scripts.txt") as f:
-    for line in f:
-        match_obj = script_re.match(line)
-        if match_obj == None:
-            continue
+def parse_scripts():
+    with open("Scripts.txt") as f:
+        str_unknown = "Unknown"
 
-        script = script_names.get(match_obj.group(3))
-        if script == None:
-            script = match_obj.group(3)
-            script_names[script] = script
+        for line in f:
+            match_obj = script_re.match(line)
+            if match_obj == None:
+                continue
 
-        first = int(match_obj.group(1), 16)
-        last = first
-        if match_obj.group(2) != None:
-            last = int(match_obj.group(2), 16)
+            script = script_names.get(match_obj.group(3))
+            if script == None:
+                script = match_obj.group(3)
+                script_names[script] = script
 
-        while first <= last:
-            codepoint = codepoints[first]
-            if codepoint[1] != str_unknown:
-                raise Exception("Codepoint script changed from: %s -> %s" % (codepoint[1], script))
-            codepoints[first] = (codepoint[0], script, 0)
-            first += 1
+            first = int(match_obj.group(1), 16)
+            last = first
+            if match_obj.group(2) != None:
+                last = int(match_obj.group(2), 16)
+
+            while first <= last:
+                codepoint = codepoints[first]
+                if codepoint[1] != str_unknown:
+                    raise Exception("Codepoint script changed from: %s -> %s" % (codepoint[1], script))
+                codepoints[first] = (codepoint[0], script, 0)
+                first += 1
+
+parse_scripts()
 
 # ------------------------------------------------------------------------------
 #   Compute names
@@ -318,7 +475,7 @@ def get_property_values(name, file_name):
 
     property_char_data.append((name.upper(), cathegory_flags, exclude, include))
 
-add_property(name, "     func(\"ASCII\", REPAN_UC_NAME_ASCII, REPAN_U_DEFINE_PROPERTY(ASCII))")
+add_property("ASCII", "     func(\"ASCII\", REPAN_UC_NAME_ASCII, REPAN_U_DEFINE_PROPERTY(ASCII))")
 property_char_data.append(("ASCII", 0, [], [-0.5, 0x7f]))
 
 get_property_values("ID_Start", "DerivedCoreProperties.txt")
@@ -461,6 +618,9 @@ with open("unicode_gen_inl.h", "w") as f:
 
     print("Size of REPAN_PRIV(u_property_data): %s bytes" % (offset * 4))
 
+    f.write("#define REPAN_U_NAME_BLOCK_SIZE %d\n" % (codepoint_name_block_size))
+    f.write("#define REPAN_U_NAME_OFFSETS_SIZE %d\n\n" % (len(codepoint_name_offsets)))
+
     f.write("#define REPAN_U_PROPERTIES(func)")
 
     for i in range(property_len_min, property_len_max + 1):
@@ -588,6 +748,40 @@ with open("unicode_gen.c", "w") as f:
         column += len(string)
 
     print("stage1 statistics: %d items, %d bytes" % (len(stage1), len(stage1) * 2))
+
+    f.write("\n};\n\nconst uint8_t REPAN_PRIV(u_name_data)[] = {")
+
+    column = 100
+    first = True
+    for value in codepoint_name_data:
+        if not first:
+            f.write(",")
+            column += 1
+        first = False
+        if column >= 100:
+            f.write("\n   ")
+            column = 3
+        string = " %d" % (value)
+        f.write(string)
+        column += len(string)
+
+    f.write("\n};\n\nconst uint32_t REPAN_PRIV(u_name_offsets)[] = {")
+
+    column = 100
+    first = True
+    for value in codepoint_name_offsets:
+        if not first:
+            f.write(",")
+            column += 1
+        first = False
+        if column >= 100:
+            f.write("\n   ")
+            column = 3
+        string = " %d" % (value)
+        f.write(string)
+        column += len(string)
+
+    print("Unicode name data: %d bytes, %d offset bytes" % (len(codepoint_name_data), len(codepoint_name_offsets) * 4))
 
     f.write("\n};\n\nconst uint32_t REPAN_PRIV(u_case_folding)[] = {\n    /* Relative distances. */")
 

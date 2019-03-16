@@ -224,3 +224,86 @@ int REPAN_PRIV(parse_repeat)(repan_parser_context *context,
 
     return REPAN_TRUE;
 }
+
+uint32_t REPAN_PRIV(u_parse_name)(repan_parser_context *context)
+{
+    uint8_t name[REPAN_U_MAX_NAME_LENGTH];
+    uint32_t *pattern = context->pattern;
+    uint32_t *pattern_end = context->pattern_end;
+    uint8_t *dst, *end;
+    uint32_t current_char;
+
+    dst = name;
+    end = name + REPAN_U_MAX_NAME_LENGTH - 1;
+
+    while (REPAN_TRUE) {
+        if (dst >= end) {
+            context->error = REPAN_ERR_INVALID_UNICODE_CODEPOINT_NAME;
+            return 0;
+        }
+
+        if (pattern >= pattern_end) {
+            context->error = REPAN_ERR_RIGHT_BRACE_EXPECTED;
+            context->pattern = pattern;
+            return 0;
+        }
+
+        current_char = *pattern;
+        if (current_char == REPAN_CHAR_MINUS || current_char == REPAN_CHAR_SPACE) {
+            int hypen_found = REPAN_FALSE;
+
+            do {
+                if (*pattern == REPAN_CHAR_MINUS) {
+                    if (!hypen_found) {
+                        *dst++ = REPAN_CHAR_EQUALS_SIGN;
+                        hypen_found = REPAN_TRUE;
+                    }
+                }
+                else if (*pattern != REPAN_CHAR_SPACE) {
+                    break;
+                }
+                pattern++;
+            } while (pattern < pattern_end);
+
+            continue;
+        }
+
+        pattern++;
+
+        if (REPAN_IS_DECIMAL_DIGIT(current_char)) {
+            *dst++ = (uint8_t)current_char;
+        }
+        else if (REPAN_IS_CASELESS_LATIN(current_char)) {
+            if (REPAN_IS_LOWERCASE_LATIN(current_char)) {
+                current_char = REPAN_TO_UPPERCASE_LATIN(current_char);
+            }
+
+            *dst++ = (uint8_t)current_char;
+        }
+        else if (current_char == REPAN_CHAR_RIGHT_BRACE) {
+            break;
+        }
+        else {
+            context->error = REPAN_ERR_RIGHT_BRACE_EXPECTED;
+            context->pattern = pattern - 1;
+            return 0;
+        }
+    }
+
+    if (dst == name) {
+        context->error = REPAN_ERR_INVALID_UNICODE_CODEPOINT_NAME;
+        return 0;
+    }
+
+    *dst = REPAN_CHAR_NUL;
+
+    current_char = REPAN_PRIV(u_find_name)(name);
+
+    if (current_char == UINT32_MAX) {
+        context->error = REPAN_ERR_INVALID_UNICODE_CODEPOINT_NAME;
+        return 0;
+    }
+
+    context->pattern = pattern;
+    return current_char;
+}
