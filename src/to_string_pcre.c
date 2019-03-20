@@ -109,22 +109,26 @@ static void to_string_keyword(repan_to_string_context *context, uint32_t type)
     to_string_cstring(context, REPAN_PRIV(keywords)[type].string);
 }
 
-static void to_string_u_property(repan_to_string_context *context, uint32_t type)
+static void to_string_u_property(repan_to_string_context *context, repan_u_property_node *property_node)
 {
     uint32_t chr;
 
     context->write(context, REPAN_CHAR_BACKSLASH);
 
     chr = REPAN_CHAR_p;
-    if (type >= REPAN_NEG_U_PROPERTY_CLASS) {
-        type -= REPAN_NEG_U_PROPERTY_CLASS;
+    if (property_node->sub_type & REPAN_U_NEGATED_PROPERTY) {
         chr = REPAN_CHAR_P;
     }
 
     context->write(context, chr);
     context->write(context, REPAN_CHAR_LEFT_BRACE);
 
-    to_string_cstring(context, REPAN_PRIV(u_properties)[type].string);
+    if (property_node->sub_type & REPAN_U_SCRIPT_EXTENSION) {
+        to_string_cstring(context, "Script_Extensions=");
+    }
+
+    REPAN_ASSERT(REPAN_PRIV(u_property_names)[property_node->property].string != NULL);
+    to_string_cstring(context, REPAN_PRIV(u_property_names)[property_node->property].string);
 
     context->write(context, REPAN_CHAR_RIGHT_BRACE);
 }
@@ -251,7 +255,7 @@ static void to_string_character_class(repan_to_string_context *context, repan_no
             break;
 
         case REPAN_U_PROPERTY_NODE:
-            to_string_u_property(context, node->sub_type);
+            to_string_u_property(context, (repan_u_property_node*)node);
             break;
 
         case REPAN_POSIX_CLASS_NODE:
@@ -457,7 +461,7 @@ static void to_string_bracket(repan_to_string_context *context)
                 break;
 
             case REPAN_U_PROPERTY_NODE:
-                to_string_u_property(context, node->sub_type);
+                to_string_u_property(context, (repan_u_property_node*)node);
                 break;
 
             case REPAN_CHAR_CLASS_NODE:

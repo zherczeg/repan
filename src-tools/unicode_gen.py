@@ -28,6 +28,9 @@
 
 import re
 
+# Useful utility:
+# https://unicode.org/cldr/utility/list-unicodeset.jsp
+
 # L& for Lu Ll Lt (called LC by the standard)
 # http://www.unicode.org/reports/tr44/#General_Category_Values
 general_cathegories = [ "Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Me", "Nd", "Nl", "No",
@@ -35,9 +38,11 @@ general_cathegories = [ "Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Me", "Nd", "N
                         "Zs", "Zl", "Zp", "Cc", "Cf", "Cs", "Co", "Cn" ]
 
 script_names = {}
+script_name_aliases = {}
 property_list = {}
 property_len_min = 1000
 property_len_max = 0
+max_codepoint_name_length = 127
 
 # Adds a property name or alias
 def add_property(name, description):
@@ -56,7 +61,7 @@ def add_property(name, description):
         property_group = []
         property_list[length] = property_group
 
-    property_group.append((name, description))
+    property_group.append((name, description % (name)))
 
 # ------------------------------------------------------------------------------
 #   Parse UnicodeData.txt
@@ -72,16 +77,15 @@ for idx, cathegory in enumerate(general_cathegories):
     cathegories[cathegory] = idx
 
 def parse_unicode_data():
-    codepoint_names = []
+    codepoint_name_map = {}
+    name_re = re.compile("^(?:[A-Z0-9]|-(?!-))+$")
 
     with open("UnicodeData.txt") as f:
         cathegory_re = re.compile("^([0-9A-F]{4,6});([^;]+);([^;]+);")
-        name_re = re.compile("^(?:[A-Z0-9]|-(?!-))+$")
         last_codepoint = -1
         str_unknown = "Unknown"
         unknown_cp = (cathegories["Cn"], str_unknown, 0)
         in_block = None
-        names = {}
 
         for line in f:
             match_obj = cathegory_re.match(line)
@@ -131,22 +135,47 @@ def parse_unicode_data():
                 if name_re.match(name) == None:
                     raise Exception("Invalid character name: %s" % (name))
 
-                if len(name) > 127:
+                if len(name) > max_codepoint_name_length:
                     raise Exception("Name limit reached (increase REPAN_U_MAX_NAME_LENGTH in literal.h): %s" % (name))
 
                 name_no_hypen = name.replace("-", "")
 
-                if name_no_hypen in names:
-                    names[name_no_hypen].extend([name, codepoint])
+                if name_no_hypen in codepoint_name_map:
+                    codepoint_name_map[name_no_hypen].extend([name, codepoint])
                 else:
-                    names[name_no_hypen] = [name, codepoint]
+                    codepoint_name_map[name_no_hypen] = [name, codepoint]
 
             codepoints.append((cathegory, str_unknown, 0))
 
     while len(codepoints) < 0x110000:
         codepoints.append(unknown_cp)
 
-    for name, values in names.items():
+    with open("NameAliases.txt") as f:
+        alias_re = re.compile("^([0-9A-F]{4,6});([^;]+);(?:correction|control|alternate|abbreviation)")
+
+        for line in f:
+            match_obj = alias_re.match(line)
+            if match_obj == None:
+                continue
+
+            codepoint = int(match_obj.group(1), 16)
+            name = match_obj.group(2).replace(" ", "")
+
+            if name_re.match(name) == None:
+                raise Exception("Invalid character name: %s" % (name))
+
+            if len(name) > max_codepoint_name_length:
+                raise Exception("Name limit reached (increase REPAN_U_MAX_NAME_LENGTH in literal.h): %s" % (name))
+
+            name_no_hypen = name.replace("-", "")
+
+            if name_no_hypen in codepoint_name_map:
+                codepoint_name_map[name_no_hypen].extend([name, codepoint])
+            else:
+                codepoint_name_map[name_no_hypen] = [name, codepoint]
+
+    codepoint_names = []
+    for name, values in codepoint_name_map.items():
         if len(values) == 2:
             codepoint_names.append((name, values[1]))
             continue
@@ -278,10 +307,10 @@ parse_unicode_data()
 #   Parse Scripts.txt
 # ------------------------------------------------------------------------------
 
-script_re = re.compile("^([0-9A-F]{4,6})(?:\.\.([0-9A-F]{4,6}))? *; ([A-Za-z_]+) ")
-
 def parse_scripts():
     with open("Scripts.txt") as f:
+        script_re = re.compile("^([0-9A-F]{4,6})(?:\.\.([0-9A-F]{4,6}))? *; ([A-Za-z_]+) ")
+        script_name_re = re.compile("^(?:[A-Za-z0-9]|_(?!_))+$")
         str_unknown = "Unknown"
 
         for line in f:
@@ -289,10 +318,11 @@ def parse_scripts():
             if match_obj == None:
                 continue
 
-            script = script_names.get(match_obj.group(3))
-            if script == None:
-                script = match_obj.group(3)
-                script_names[script] = script
+            script = match_obj.group(3)
+            if not script in script_names:
+                if script_name_re.match(script) == None:
+                    raise Exception("Invalid script name: %s" % (script))
+                script_names[script] = []
 
             first = int(match_obj.group(1), 16)
             last = first
@@ -306,56 +336,205 @@ def parse_scripts():
                 codepoints[first] = (codepoint[0], script, 0)
                 first += 1
 
+    with open("PropertyValueAliases.txt") as f:
+        names_found = len(script_names)
+        script_re = re.compile("^sc ; ([A-Za-z_]+) +; ([A-Za-z_]+)")
+
+        for line in f:
+            match_obj = script_re.match(line)
+            if match_obj == None:
+                continue
+
+            alias = match_obj.group(1)
+            name = match_obj.group(2)
+
+            if not name in script_names:
+                if name != "Katakana_Or_Hiragana" and name != "Unknown":
+                    raise Exception("Unknown script name: %s" % (name))
+                continue
+
+            names_found -= 1
+
+            if alias in script_name_aliases:
+                raise Exception("Script alias is not unique: %s" % (alias))
+
+            script_name_aliases[alias] = name
+
+        if names_found != 0:
+            raise Exception("Each script names must have an alias")
+
+    with open("ScriptExtensions.txt") as f:
+        script_re = re.compile("^([0-9A-F]{4,6})(?:\.\.([0-9A-F]{4,6}))? *;((?: +[A-Za-z_]+)+) ")
+
+        for line in f:
+            match_obj = script_re.match(line)
+            if match_obj == None:
+                continue
+
+            first = int(match_obj.group(1), 16)
+            last = first
+            if match_obj.group(2) != None:
+                last = int(match_obj.group(2), 16)
+
+            for alias in match_obj.group(3).split(" "):
+                if alias == "":
+                    continue
+
+                name = script_name_aliases.get(alias)
+                if name == None:
+                    raise Exception("Unknown script alias: %s" % (alias))
+
+                char_list = script_names[name]
+
+                for ch in range(first, last + 1):
+                    if codepoints[ch][1] == name:
+                        continue
+
+                    char_list.append(ch)
+
+    for name, char_list in script_names.items():
+        char_list.sort()
+        new_char_list = []
+
+        start = -2
+        end = -2
+        for ch in char_list:
+            if ch == end + 1:
+                end = ch
+                continue
+
+            if start + 1 == end:
+                new_char_list.append(start)
+                new_char_list.append(end)
+            elif start != end:
+                if start == 0:
+                    new_char_list.append(-0.5)
+                else:
+                    new_char_list.append(-start)
+                new_char_list.append(end)
+            elif start != -2:
+                new_char_list.append(start)
+            start = ch
+            end = ch
+
+        if start + 1 == end:
+            new_char_list.append(start)
+            new_char_list.append(end)
+        elif start != end:
+            if start == 0:
+                new_char_list.append(-0.5)
+            else:
+                new_char_list.append(-start)
+            new_char_list.append(end)
+        elif start != -2:
+            new_char_list.append(start)
+
+        script_names[name] = new_char_list
+
 parse_scripts()
 
 # ------------------------------------------------------------------------------
-#   Compute names
+#   Compute property names
 # ------------------------------------------------------------------------------
 
 property_char_data = []
 
-def add_derived_property(name, uppercase_name, include_cathegories):
-    add_property(name, "     func(\"%s\", REPAN_UC_NAME_%s, REPAN_U_DEFINE_PROPERTY(%s))"
-                       % (name, uppercase_name, uppercase_name))
+def add_derived_property(name, include_cathegories):
+    if name == "L&":
+        uppercase_name = "L_AMPERSAND"
+        add_property("L&", "     func(\"%s\", \"L&\", REPAN_UN_L_AMPERSAND, REPAN_U_DEFINE(L_AMPERSAND))")
+    else:
+        uppercase_name = name.upper()
+        add_property(uppercase_name, "     func(\"%%s\", \"%s\", REPAN_UN_%s, REPAN_U_DEFINE(%s))"
+                                     % (name, uppercase_name, uppercase_name))
+
     cathegory_flags = 0
     for cathegory in include_cathegories:
         cathegory_flags |= 1 << cathegories[cathegory]
-    property_char_data.append((uppercase_name, cathegory_flags, [], []))
+    property_char_data.append((uppercase_name, cathegory_flags, None, None))
 
-add_derived_property("Any", "ANY", general_cathegories)
+add_derived_property("Any", general_cathegories)
 if general_cathegories[-1] != "Cn":
     raise Exception("Cn must be the last member of general cathegories.")
-add_derived_property("Assigned", "ASSIGNED", general_cathegories[0:-1])
-add_derived_property("L&", "L_AMPERSAND", ["Lu", "Ll", "Lt"])
+add_derived_property("Assigned", general_cathegories[0:-1])
+add_derived_property("L&", ["Lu", "Ll", "Lt"])
+add_property("LC", "     func(\"%s\", \"LC\", REPAN_UN_L_AMPERSAND, REPAN_U_DEFINE(L_AMPERSAND))")
 
-for cathegory in general_cathegories:
-    add_property(cathegory, "     func(\"%s\", REPAN_UC_NAME_%s, REPAN_U_DEFINE_CATHEGORY(%s))"
-                            % (cathegory, cathegory, cathegory))
+def add_cathegories():
+    last_cathegory = None
+    cathegory_flags = 0
 
-last_cathegory = None
-cathegory_flags = 0
+    for idx, cathegory in enumerate(general_cathegories):
+        uppercase_cathegory = cathegory.upper()
+        property_char_data.append((uppercase_cathegory, 1 << idx, None, None))
+        add_property(uppercase_cathegory, "     func(\"%%s\", \"%s\", REPAN_UN_%s, REPAN_U_DEFINE(%s))"
+                                          % (cathegory, uppercase_cathegory, uppercase_cathegory))
 
-for idx, cathegory in enumerate(general_cathegories):
-    current_cathegory = cathegory[0]
-    if current_cathegory == last_cathegory:
-       cathegory_flags |= 1 << idx
-       continue
+        current_cathegory = cathegory[0]
+        if current_cathegory == last_cathegory:
+           cathegory_flags |= 1 << idx
+           continue
 
-    if last_cathegory != None:
-        property_char_data.append((last_cathegory, cathegory_flags, [], []))
-        add_property(last_cathegory, "     func(\"%s\", REPAN_UC_NAME_%s, REPAN_U_DEFINE_PROPERTY(%s))"
-                                     % (last_cathegory, last_cathegory, last_cathegory))
-    last_cathegory = current_cathegory
-    cathegory_flags = 1 << idx
+        if last_cathegory != None:
+            property_char_data.append((last_cathegory, cathegory_flags, None, None))
+            add_property(last_cathegory, "     func(\"%%s\", \"%s\", REPAN_UN_%s, REPAN_U_DEFINE(%s))"
+                                         % (last_cathegory, last_cathegory, last_cathegory))
+        last_cathegory = current_cathegory
+        cathegory_flags = 1 << idx
 
-property_char_data.append((last_cathegory, cathegory_flags, [], []))
-add_property(last_cathegory, "     func(\"%s\", REPAN_UC_NAME_%s, REPAN_U_DEFINE_PROPERTY(%s))"
-                             % (last_cathegory, last_cathegory, last_cathegory))
+    property_char_data.append((last_cathegory, cathegory_flags, None, None))
+    add_property(last_cathegory, "     func(\"%%s\", \"%s\", REPAN_UN_%s, REPAN_U_DEFINE(%s))"
+                                 % (last_cathegory, last_cathegory, last_cathegory))
 
-for name in script_names:
-    name_upper = name.upper()
-    add_property(name, "     func(\"%s\", REPAN_US_%s, REPAN_U_DEFINE_SCRIPT(%s))"
-                       % (name, name_upper, name_upper))
+    extra_cathegories = ["C", "L", "M", "N", "P", "S", "Z", "LC"]
+
+    with open("PropertyValueAliases.txt") as f:
+        names_found = len(script_names)
+        cathegory_re = re.compile("^gc ; ([A-Za-z]+) +; ([A-Za-z_ ;]+)")
+
+        for line in f:
+            match_obj = cathegory_re.match(line)
+            if match_obj == None:
+                continue
+
+            aliases = match_obj.group(2).replace(" ", "").split(";")
+            cathegory = match_obj.group(1)
+
+            if not cathegory in cathegories and not cathegory in extra_cathegories:
+                raise Exception("Unknown cathegory: %s" % (cathegory))
+
+            if cathegory == "LC":
+                cathegory = "L_AMPERSAND"
+
+            for alias in aliases:
+                uppercase_alias = alias.upper()
+                add_property(uppercase_alias.replace("_", ""), "     func(\"%%s\", \"%s\", REPAN_UN_%s, REPAN_U_DEFINE(%s))"
+                                                               % (alias, uppercase_alias, cathegory.upper()))
+
+add_cathegories()
+
+def add_scripts():
+    names = []
+    for name in script_names:
+        names.append((name, name))
+    for alias, name in script_name_aliases.items():
+        if alias != name:
+            names.append((alias, name))
+        elif not alias in script_names:
+            raise Exception("Internal error: invalid alias")
+
+    names.sort(key=lambda tup: tup[0])
+
+    for name in names:
+        name_upper = name[0].upper()
+        add_property(name_upper.replace("_", ""), "     func(\"%%s\", \"%s\", REPAN_UN_%s, REPAN_U_DEFINE(%s))"
+                                                  % (name[0], name_upper, name[1].upper()))
+
+        if name[0] == name[1]:
+            property_char_data.append((name_upper, 0, None, script_names.get(name[0])))
+
+add_scripts()
+script_name_aliases = None
 
 # ------------------------------------------------------------------------------
 #   Parse PropList.txt / DerivedCoreProperties.txt
@@ -475,7 +654,7 @@ def get_property_values(name, file_name):
 
     property_char_data.append((name.upper(), cathegory_flags, exclude, include))
 
-add_property("ASCII", "     func(\"ASCII\", REPAN_UC_NAME_ASCII, REPAN_U_DEFINE_PROPERTY(ASCII))")
+add_property("ASCII", "     func(\"%s\", \"ASCII\", REPAN_UN_ASCII, REPAN_U_DEFINE(ASCII))")
 property_char_data.append(("ASCII", 0, [], [-0.5, 0x7f]))
 
 get_property_values("ID_Start", "DerivedCoreProperties.txt")
@@ -604,17 +783,29 @@ def license(f):
 with open("unicode_gen_inl.h", "w") as f:
     license(f)
 
-    f.write("enum {\n")
+    f.write("enum {")
+    first = True
     for cathegory in general_cathegories:
-        f.write("    REPAN_UC_%s,\n" % (cathegory))
+        if not first:
+            f.write(",")
+        first = False
+        f.write("\n    REPAN_UC_%s" % (cathegory))
 
-    f.write("};\n\nenum {\n")
+    f.write("\n};\n\nenum {")
     offset = 0
+    first = True
     for char_data in property_char_data:
-        f.write("    REPAN_UP_%s = %d,\n" % (char_data[0], offset))
+        if not first:
+            f.write(",")
+        first = False
+        f.write("\n    REPAN_UP_%s = %d" % (char_data[0], offset))
 
-        offset += 3 + len(char_data[2]) + len(char_data[3])
-    f.write("};\n\n")
+        offset += 1
+        if char_data[2] != None:
+            offset += 1 + len(char_data[2])
+        if char_data[3] != None:
+            offset += 1 + len(char_data[3])
+    f.write("\n};\n\n")
 
     print("Size of REPAN_PRIV(u_property_data): %s bytes" % (offset * 4))
 
@@ -623,6 +814,7 @@ with open("unicode_gen_inl.h", "w") as f:
 
     f.write("#define REPAN_U_PROPERTIES(func)")
 
+    prev = ""
     for i in range(property_len_min, property_len_max + 1):
         values = property_list.get(i)
         if values == None:
@@ -630,7 +822,10 @@ with open("unicode_gen_inl.h", "w") as f:
 
         values.sort(key=lambda tup: tup[0])
         for value in values:
+            if prev == value[0]:
+                raise Exception("Duplicated name: %s" % (prev))
             f.write(" \\\n" + value[1])
+            prev = value[0]
 
     f.write("\n")
 
@@ -702,7 +897,22 @@ with open("unicode_gen.c", "w") as f:
     known = {}
     next_id = 0
 
-    f.write("static const repan_u_codepoint codepoints[] = {")
+    f.write("enum {")
+
+    names = ["UNKNOWN"]
+    for name in script_names:
+        names.append(name.upper())
+    names.sort()
+
+    first = True
+    for name in names:
+        if not first:
+            f.write(",")
+        first = False
+        f.write("\n    REPAN_US_%s" % (name))
+    names = None
+
+    f.write("\n};\n\nstatic const repan_u_codepoint codepoints[] = {")
     first = True
     for i in range(0, 0x110000):
         codepoint = codepoints[i]
@@ -818,8 +1028,14 @@ with open("unicode_gen.c", "w") as f:
              f.write(",\n")
          first = False
 
-         f.write("    /* %s */ 0x%08x,\n    /* (-) */" % (char_data[0], char_data[1]))
-         dump_prop_list(f, char_data[2], 13)
+         if char_data[2] != None:
+             f.write("    /* %s */ 0x%08x,\n    /* (-) */" % (char_data[0], char_data[1]))
+             dump_prop_list(f, char_data[2], 13)
+         elif char_data[3] != None:
+             f.write("    REPAN_U_DEFINE_SCRIPT | REPAN_US_%s" % (char_data[0]))
+         else:
+             f.write("    /* %s */ REPAN_U_DEFINE_CATHEGORY | 0x%08x" % (char_data[0], char_data[1]));
+             continue
          f.write(",\n    /* (+) */")
          dump_prop_list(f, char_data[3], 13)
 

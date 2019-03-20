@@ -106,6 +106,11 @@ enum {
     REPAN_NEGATED_CLASS,
 };
 
+enum {
+    REPAN_U_NEGATED_PROPERTY = (1 << 0),
+    REPAN_U_SCRIPT_EXTENSION = (2 << 0),
+};
+
 #define REPAN_NODE_HEADER \
     struct repan_node_struct *next_node; \
     uint8_t type; \
@@ -147,6 +152,11 @@ typedef struct {
     uint8_t caseless;
     uint32_t chr;
 } repan_char_node;
+
+typedef struct {
+    REPAN_NODE_HEADER;
+    uint16_t property;
+} repan_u_property_node;
 
 typedef struct {
     REPAN_NODE_HEADER;

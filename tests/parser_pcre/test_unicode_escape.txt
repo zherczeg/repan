@@ -14,7 +14,46 @@
 /\p#/u
     print
 
-/\p{Unk!nown}/u
+/\p{Bam!um}/u
+    print
+
+/\P{Bamum/u
+    print
+
+/\P{sc=Ol_Chiki}\p{Script=o_lchIK_I}/u
+    print
+
+/\p{  -S-  _C_  =  -c-  _o_  -P-  _t_  -i-  _C_  }/u
+    print
+
+/\P{ Script Extensions = caNs }\p{SCx= AR_mi}/u
+    print
+
+/\p{ G-c =  l & }\P{ geneRAl_cate_gor-y = C }/u
+    print
+
+/\p{ Script = So }/u
+    print
+
+/\p{ Script_Extensions = Pi }/u
+    print
+
+/\p{ General_Category = BOPO }/u
+    print
+
+/\p{ gc = gc = S }/u
+    print
+
+/\p{ gc = a! }/u
+    print
+
+/\p{Control}\P{c-o-nt_r_oL}\p{c_nTr-l}/u
+    print
+
+/\p{lC}\P{_L_c_}\p{Cased_Letter}\P{ca_sEDLetTe-r}/u
+    print
+
+/\p{punctU ation}\P{pu-n-ct}\p{Final_Punctuation}\P{daShpunc Tuation}/u
     print
 
 # Unicode name support
@@ -29,6 +68,9 @@
     ascii, print
 
 /\N{A- B -A  Cu-S}\N{Z-o M--b  I  - -e}/u
+    ascii, print
+
+/\N{FormFeed}\N{-f-f-}\N{LatIncapITAL-LEt tERGH A}/u
     ascii, print
 
 /\N{ZOMBIEE}/u

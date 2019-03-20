@@ -311,62 +311,6 @@ static void parse_reference(repan_parser_context *context, repan_parser_locals *
     return;
 }
 
-static uint8_t parse_u_property(repan_parser_context *context)
-{
-    uint32_t *pattern = context->pattern;
-    uint32_t data;
-    uint32_t base = 0;
-
-    REPAN_ASSERT(pattern[-1] == REPAN_CHAR_p || pattern[-1] == REPAN_CHAR_P);
-
-    if (pattern[-1] == REPAN_CHAR_P) {
-        base = REPAN_NEG_U_PROPERTY_CLASS;
-    }
-
-    if (*pattern != REPAN_CHAR_LEFT_BRACE) {
-        uint32_t chr = *pattern++;
-
-        if (!REPAN_IS_CASELESS_LATIN(chr)) {
-            context->error = REPAN_ERR_INVALID_P_SEQUENCE;
-            context->pattern -= 2;
-            return 0;
-        }
-
-        data = REPAN_PRIV(find_u_property)(&chr, 1);
-    }
-    else {
-        pattern++;
-
-        while (REPAN_IS_CASELESS_LATIN(*pattern) || *pattern == REPAN_CHAR_UNDERSCORE
-                || *pattern == REPAN_CHAR_AMPERSAND) {
-            pattern++;
-        }
-
-        if (pattern == context->pattern) {
-            context->error = REPAN_ERR_INVALID_P_SEQUENCE;
-            context->pattern -= 2;
-            return 0;
-        }
-
-        if (*pattern != REPAN_CHAR_RIGHT_BRACE) {
-            context->error = REPAN_ERR_RIGHT_BRACE_EXPECTED;
-            context->pattern = pattern;
-            return 0;
-        }
-
-        data = REPAN_PRIV(find_u_property)(context->pattern + 1, pattern - context->pattern - 1);
-        pattern++;
-    }
-
-    if (data == 0) {
-        context->error = REPAN_ERR_UNKNOWN_PROPERTY;
-        context->pattern -= 2;
-        return 0;
-    }
-    context->pattern = pattern;
-    return (uint8_t)((data & REPAN_U_PROPERTY_TYPE_MASK) + base);
-}
-
 static int parse_may_backref(repan_parser_context *context, repan_parser_locals *locals)
 {
     uint32_t *pattern = context->pattern;
@@ -656,13 +600,14 @@ static void parse_character(repan_parser_context *context, repan_parser_locals *
             return;
         case REPAN_CHAR_p:
         case REPAN_CHAR_P:
-            node_sub_type = parse_u_property(context);
-
-            if (context->error != REPAN_SUCCESS) {
-                return;
+            node = REPAN_PRIV(u_parse_property)(context, REPAN_FALSE);
+            if (node != NULL) {
+                REPAN_ASSERT(context->error == REPAN_SUCCESS);
+                locals->prev_node = (repan_prev_node*)locals->last_node;
+                locals->last_node->next_node = node;
+                locals->last_node = node;
             }
-            node_type = REPAN_U_PROPERTY_NODE;
-            break;
+            return;
         case REPAN_CHAR_r:
             current_char = REPAN_ESC_r;
             break;
@@ -903,15 +848,18 @@ static void parse_char_range(repan_parser_context *context, repan_parser_locals 
             case REPAN_CHAR_p:
             case REPAN_CHAR_P:
                 context->pattern = pattern;
-                node_sub_type = parse_u_property(context);
+                node = REPAN_PRIV(u_parse_property)(context, REPAN_FALSE);
 
                 if (context->error != REPAN_SUCCESS) {
                     return;
                 }
 
+                REPAN_ASSERT(node != NULL);
+                prev_node->next_node = node;
+                prev_node = (repan_prev_node*)node;
+
                 pattern = context->pattern;
-                node_type = REPAN_U_PROPERTY_NODE;
-                break;
+                continue;
             case REPAN_CHAR_r:
                 current_char = REPAN_ESC_r;
                 break;

@@ -106,7 +106,7 @@ const char *repan_get_error_message(uint32_t error)
     case REPAN_ERR_INVALID_C_SEQUENCE:
         return "A printable ascii character is required after \\c";
     case REPAN_ERR_INVALID_P_SEQUENCE:
-        return "A valid property letter or property name in {...} required after \\p or \\P";
+        return "A valid unicode property required after \\p or \\P";
     case REPAN_ERR_INVALID_U_SEQUENCE:
         return "Four hexadecimal digits are required after \\u";
     case REPAN_ERR_UNKNOWN_PROPERTY:
@@ -127,6 +127,10 @@ const char *repan_get_error_message(uint32_t error)
         return "Unterminated \\Q...\\E sequence";
     case REPAN_ERR_UNTERMINATED_COMMENT:
         return "Unterminated comment";
+    case REPAN_ERR_UNICODE_SCRIPT_EXPECTED:
+        return "Unicode script name expected";
+    case REPAN_ERR_UNICODE_CATHEGORY_EXPECTED:
+        return "Unicode cathegory expected";
     case REPAN_ERR_POSIX_INVALID_QUANTIFIER:
         return "Invalid {} repeat block";
     case REPAN_ERR_GLOB_INVALID_ASTERISK:

@@ -171,11 +171,11 @@ static uint32_t find_list_item(const repan_string_list_item *items, size_t numbe
     uint32_t *string_start, size_t string_length)
 {
     size_t min = 0;
-    size_t max = number_of_items;
+    size_t max = number_of_items >> 1;
     uint32_t *src2_end = string_start + string_length;
 
     if (string_length < (items[0].data >> REPAN_STRING_LIST_LENGTH_SHIFT)
-            || string_length > (items[number_of_items - 1].data >> REPAN_STRING_LIST_LENGTH_SHIFT))
+            || string_length > (items[max - 1].data >> REPAN_STRING_LIST_LENGTH_SHIFT))
     {
         return 0;
     }
@@ -218,7 +218,7 @@ static uint32_t find_list_item(const repan_string_list_item *items, size_t numbe
             src2++;
 
             if (src2 >= src2_end) {
-                return current_data;
+                return (number_of_items & 0x1) ? middle + 1 : current_data;
             }
         }
     } while (min < max);
@@ -230,43 +230,63 @@ static uint32_t find_list_item(const repan_string_list_item *items, size_t numbe
     { (data | (uint32_t)((sizeof(name) - 1) << REPAN_STRING_LIST_LENGTH_SHIFT)), name },
 
 const repan_string_list_item REPAN_PRIV(keywords)[] = {
-REPAN_KEYWORDS(REPAN_GET_LIST_ITEM_DATA)
+    REPAN_KEYWORDS(REPAN_GET_LIST_ITEM_DATA)
 };
+
+#undef REPAN_GET_LIST_ITEM_DATA
 
 uint32_t REPAN_PRIV(find_keyword)(uint32_t *keyword, size_t length)
 {
-    size_t number_of_items = sizeof(REPAN_PRIV(keywords)) / sizeof(repan_string_list_item);
+    size_t number_of_items = sizeof(REPAN_PRIV(keywords)) * 2 / sizeof(repan_string_list_item);
 
     return find_list_item(REPAN_PRIV(keywords), number_of_items, keyword, length);
 }
 
+#define REPAN_GET_LIST_ITEM_DATA(name, type, data) \
+    { (data | (uint32_t)((sizeof(name) - 1) << REPAN_STRING_LIST_LENGTH_SHIFT)), name },
+
 const repan_string_list_item REPAN_PRIV(posix_classes)[] = {
-REPAN_POSIX_CLASSES(REPAN_GET_LIST_ITEM_DATA)
+    REPAN_POSIX_CLASSES(REPAN_GET_LIST_ITEM_DATA)
 };
+
+#undef REPAN_GET_LIST_ITEM_DATA
 
 uint32_t REPAN_PRIV(find_posix_class)(uint32_t *name, size_t length)
 {
-    size_t number_of_items = sizeof(REPAN_PRIV(posix_classes)) / sizeof(repan_string_list_item);
+    size_t number_of_items = sizeof(REPAN_PRIV(posix_classes)) * 2 / sizeof(repan_string_list_item);
 
     return find_list_item(REPAN_PRIV(posix_classes), number_of_items, name, length);
 }
 
-#define REPAN_U_DEFINE_SCRIPT(name) \
-    (REPAN_US_ ## name | REPAN_U_SCRIPT)
+#define REPAN_GET_LIST_ITEM_DATA(name, real_name, type, data) \
+    { (data | (uint32_t)((sizeof(name) - 1) << REPAN_STRING_LIST_LENGTH_SHIFT)), name },
 
-#define REPAN_U_DEFINE_PROPERTY(name) \
-    (REPAN_UC_NAME_ ## name | (REPAN_UP_ ## name << 8) | REPAN_U_PROPERTY)
-
-#define REPAN_U_DEFINE_CATHEGORY(name) \
-    (REPAN_UC_NAME_ ## name | (REPAN_UC_ ## name << 8) | REPAN_U_CATHEGORY)
+#define REPAN_U_DEFINE(name) \
+    (REPAN_UN_ ## name | (REPAN_UP_ ## name << REPAN_U_PROPERTY_TYPE_SHIFT))
 
 const repan_string_list_item REPAN_PRIV(u_properties)[] = {
-REPAN_U_PROPERTIES(REPAN_GET_LIST_ITEM_DATA)
+    REPAN_U_PROPERTIES(REPAN_GET_LIST_ITEM_DATA)
 };
 
-uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length)
+#undef REPAN_GET_LIST_ITEM_DATA
+#undef REPAN_U_DEFINE
+
+#define REPAN_GET_LIST_ITEM_DATA(name, real_name, type, data) \
+    { real_name },
+
+const repan_u_property_name_item REPAN_PRIV(u_property_names)[] = {
+    REPAN_U_PROPERTIES(REPAN_GET_LIST_ITEM_DATA)
+};
+
+#undef REPAN_GET_LIST_ITEM_DATA
+
+uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length, int get_index)
 {
-    size_t number_of_items = sizeof(REPAN_PRIV(u_properties)) / sizeof(repan_string_list_item);
+    size_t number_of_items = sizeof(REPAN_PRIV(u_properties)) * 2 / sizeof(repan_string_list_item);
+
+    if (get_index) {
+        number_of_items |= 0x1;
+    }
 
     return find_list_item(REPAN_PRIV(u_properties), number_of_items, name, length);
 }

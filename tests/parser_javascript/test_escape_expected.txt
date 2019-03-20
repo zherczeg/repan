@@ -62,7 +62,59 @@
     Pattern parse failed: Unknown \p or \P property
         /[ HERE ]>>\p{Unknown}/
 
-/\p{Unk!nown}/J
+/\p{Chak!ma}/J
+    print
+    Pattern parse failed: A valid unicode property required after \p or \P
+        /[ HERE ]>>\p{Chak!ma}/
+
+/\p{Chakma/J
     print
     Pattern parse failed: A right brace (}) is expected
-        /\p{Unk[ HERE ]>>!nown}/
+        /\p{Chakma[ HERE ]>>/
+
+/\p{Ahom}\P{Cher}\p{Plrd}\P{Miao}/J
+    print
+    /\p{Ahom}\P{Cherokee}\p{Miao}\P{Miao}/
+
+/\p{AHom}/J
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\p{AHom}/
+
+/\p{ Cher}/J
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\p{ Cher}/
+
+/\p{sc=Egyp}\P{Script=Hira}\p{scx=Linear_B}\P{Script_Extensions=Multani}/J
+    print
+    /\p{Egyptian_Hieroglyphs}\P{Hiragana}\p{Script_Extensions=Linear_B}\P{Script_Extensions=Multani}/
+
+/\p{gc=Ps}\P{General_Category=Po}/J
+    print
+    /\p{Ps}\P{Po}/
+
+/\p{sc=Ps}/J
+    print
+    Pattern parse failed: Unicode script name expected
+        /\p{sc=[ HERE ]>>Ps}/
+
+/\p{General_Category=Linear_A}/J
+    print
+    Pattern parse failed: Unicode cathegory expected
+        /\p{General_Category=[ HERE ]>>Linear_A}/
+
+/\p{scx}/J
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /[ HERE ]>>\p{scx}/
+
+/\p{gc= Ps}/J
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /\p{gc=[ HERE ]>> Ps}/
+
+/\P{General_Category=Po }/J
+    print
+    Pattern parse failed: Unknown \p or \P property
+        /\P{General_Category=[ HERE ]>>Po }/

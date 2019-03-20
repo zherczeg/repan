@@ -44,5 +44,38 @@
 /\p{Unknown}/J
     print
 
-/\p{Unk!nown}/J
+/\p{Chak!ma}/J
+    print
+
+/\p{Chakma/J
+    print
+
+/\p{Ahom}\P{Cher}\p{Plrd}\P{Miao}/J
+    print
+
+/\p{AHom}/J
+    print
+
+/\p{ Cher}/J
+    print
+
+/\p{sc=Egyp}\P{Script=Hira}\p{scx=Linear_B}\P{Script_Extensions=Multani}/J
+    print
+
+/\p{gc=Ps}\P{General_Category=Po}/J
+    print
+
+/\p{sc=Ps}/J
+    print
+
+/\p{General_Category=Linear_A}/J
+    print
+
+/\p{scx}/J
+    print
+
+/\p{gc= Ps}/J
+    print
+
+/\P{General_Category=Po }/J
     print

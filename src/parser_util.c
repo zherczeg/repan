@@ -307,3 +307,256 @@ uint32_t REPAN_PRIV(u_parse_name)(repan_parser_context *context)
     context->pattern = pattern;
     return current_char;
 }
+
+static int u_is_string_equal(uint32_t *str1, const char *str2)
+{
+    do {
+        if (*str1++ != *str2++) {
+            return REPAN_FALSE;
+        }
+    } while (*str2 != REPAN_CHAR_NUL);
+
+    return REPAN_TRUE;
+}
+
+enum {
+    REPAN_U_PARSE_PROPERTY_MODE_NOT_SET,
+    REPAN_U_PARSE_PROPERTY_MODE_SCRIPT,
+    REPAN_U_PARSE_PROPERTY_MODE_SCRIPT_EXTENSION,
+    REPAN_U_PARSE_PROPERTY_MODE_GENERAL_CATHEGORY,
+};
+
+static int u_get_mode_strict(uint32_t *start, uint32_t *end)
+{
+    switch (end - start) {
+    case 2:
+        if (u_is_string_equal(start, "sc")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT;
+        }
+        if (u_is_string_equal(start, "gc")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_GENERAL_CATHEGORY;
+        }
+        break;
+    case 3:
+        if (u_is_string_equal(start, "scx")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT_EXTENSION;
+        }
+        break;
+    case 6:
+        if (u_is_string_equal(start, "Script")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT;
+        }
+        break;
+    case 16:
+        if (u_is_string_equal(start, "General_Category")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_GENERAL_CATHEGORY;
+        }
+        break;
+    case 17:
+        if (u_is_string_equal(start, "Script_Extensions")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT_EXTENSION;
+        }
+        break;
+    }
+
+    return REPAN_U_PARSE_PROPERTY_MODE_NOT_SET;
+}
+
+static int u_get_mode_non_strict(uint32_t *start, uint32_t *end)
+{
+    switch (end - start) {
+    case 2:
+        if (u_is_string_equal(start, "SC")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT;
+        }
+        if (u_is_string_equal(start, "GC")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_GENERAL_CATHEGORY;
+        }
+        break;
+    case 3:
+        if (u_is_string_equal(start, "SCX")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT_EXTENSION;
+        }
+        break;
+    case 6:
+        if (u_is_string_equal(start, "SCRIPT")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT;
+        }
+        break;
+    case 15:
+        if (u_is_string_equal(start, "GENERALCATEGORY")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_GENERAL_CATHEGORY;
+        }
+        break;
+    case 16:
+        if (u_is_string_equal(start, "SCRIPTEXTENSIONS")) {
+            return REPAN_U_PARSE_PROPERTY_MODE_SCRIPT_EXTENSION;
+        }
+        break;
+    }
+
+    return REPAN_U_PARSE_PROPERTY_MODE_NOT_SET;
+}
+
+repan_node *REPAN_PRIV(u_parse_property)(repan_parser_context *context, int is_strict)
+{
+    uint32_t name[REPAN_U_MAX_NAME_LENGTH];
+    repan_u_property_node *property_node;
+    uint32_t *pattern = context->pattern;
+    uint32_t *start = context->pattern - 2;
+    uint32_t *dst = name;
+    uint32_t *end = name + REPAN_U_MAX_NAME_LENGTH - 1;
+    uint32_t data, prop_info;
+    uint8_t sub_type = 0;
+    int mode = REPAN_U_PARSE_PROPERTY_MODE_NOT_SET;
+
+    REPAN_ASSERT(pattern[-1] == REPAN_CHAR_p || pattern[-1] == REPAN_CHAR_P);
+
+    if (pattern[-1] == REPAN_CHAR_P) {
+        sub_type = REPAN_U_NEGATED_PROPERTY;
+    }
+
+    if (*pattern != REPAN_CHAR_LEFT_BRACE) {
+        uint32_t chr = *pattern++;
+
+        if (!REPAN_IS_CASELESS_LATIN(chr)) {
+            context->error = REPAN_ERR_INVALID_P_SEQUENCE;
+            context->pattern = start;
+            return NULL;
+        }
+
+        *dst++ = chr;
+        end = pattern;
+    }
+    else {
+        pattern++;
+        context->pattern = pattern;
+
+        while (REPAN_TRUE) {
+            uint32_t chr = *pattern;
+
+            if (chr == REPAN_CHAR_SPACE || chr == REPAN_CHAR_UNDERSCORE || chr == REPAN_CHAR_MINUS) {
+                pattern++;
+                continue;
+            }
+
+            if (chr == REPAN_CHAR_RIGHT_BRACE) {
+                break;
+            }
+
+            if (chr == REPAN_CHAR_EQUALS_SIGN) {
+                if (mode != REPAN_U_PARSE_PROPERTY_MODE_NOT_SET) {
+                    context->error = REPAN_ERR_INVALID_P_SEQUENCE;
+                    context->pattern = start;
+                    return NULL;
+                }
+
+                if (is_strict) {
+                    mode = u_get_mode_strict(context->pattern, pattern);
+                }
+                else {
+                    mode = u_get_mode_non_strict(name, dst);
+                }
+
+                if (mode == REPAN_U_PARSE_PROPERTY_MODE_NOT_SET) {
+                    context->error = REPAN_ERR_INVALID_P_SEQUENCE;
+                    context->pattern = start;
+                    return NULL;
+                }
+
+                dst = name;
+                pattern++;
+                context->pattern = pattern;
+                continue;
+            }
+
+            if (REPAN_IS_CASELESS_LATIN(chr) || chr == REPAN_CHAR_AMPERSAND) {
+                if (REPAN_IS_LOWERCASE_LATIN(chr)) {
+                    chr = REPAN_TO_UPPERCASE_LATIN(chr);
+                }
+                *dst++ = chr;
+                if (dst <= end) {
+                    pattern++;
+                    continue;
+                }
+            }
+
+            if (pattern >= context->pattern_end) {
+                context->error = REPAN_ERR_RIGHT_BRACE_EXPECTED;
+                context->pattern = pattern;
+                return NULL;
+            }
+
+            context->error = REPAN_ERR_INVALID_P_SEQUENCE;
+            context->pattern = start;
+            return NULL;
+        }
+
+        end = pattern;
+        pattern++;
+    }
+
+    if (is_strict) {
+        uint32_t prop_index = REPAN_PRIV(find_u_property)(name, dst - name, REPAN_TRUE);
+
+        data = 0;
+        if (prop_index != 0) {
+            prop_index--;
+            const char *string = REPAN_PRIV(u_property_names)[prop_index].string;
+
+            if (strlen(string) != (size_t)(end - context->pattern) || !u_is_string_equal(context->pattern, string)) {
+                context->error = REPAN_ERR_UNKNOWN_PROPERTY;
+
+                if (mode == REPAN_U_PARSE_PROPERTY_MODE_NOT_SET) {
+                    context->pattern = start;
+                }
+                return NULL;
+            }
+
+            data = REPAN_PRIV(u_properties)[prop_index].data;
+        }
+    }
+    else {
+        data = REPAN_PRIV(find_u_property)(name, dst - name, REPAN_FALSE);
+    }
+
+    if (data == 0) {
+        context->error = REPAN_ERR_UNKNOWN_PROPERTY;
+
+        if (mode == REPAN_U_PARSE_PROPERTY_MODE_NOT_SET) {
+            context->pattern = start;
+        }
+        return NULL;
+    }
+
+    switch (mode) {
+    case REPAN_U_PARSE_PROPERTY_MODE_SCRIPT_EXTENSION:
+        sub_type = (uint8_t)(sub_type | REPAN_U_SCRIPT_EXTENSION);
+        /* Fallthrough. */
+    case REPAN_U_PARSE_PROPERTY_MODE_SCRIPT:
+        prop_info = REPAN_PRIV(u_property_list)[REPAN_U_GET_PROPERTY(data)];
+
+        if ((prop_info & REPAN_U_DEFINE_SCRIPT) != REPAN_U_DEFINE_SCRIPT) {
+            context->error = REPAN_ERR_UNICODE_SCRIPT_EXPECTED;
+            return NULL;
+        }
+        break;
+    case REPAN_U_PARSE_PROPERTY_MODE_GENERAL_CATHEGORY:
+        prop_info = REPAN_PRIV(u_property_list)[REPAN_U_GET_PROPERTY(data)];
+
+        if (!(prop_info & REPAN_U_IS_CATHEGORY)) {
+            context->error = REPAN_ERR_UNICODE_CATHEGORY_EXPECTED;
+            return NULL;
+        }
+        break;
+    }
+
+    property_node = REPAN_ALLOC(repan_u_property_node, context->result);
+    property_node->next_node = NULL;
+    property_node->type = REPAN_U_PROPERTY_NODE;
+    property_node->sub_type = sub_type;
+    property_node->property = data & REPAN_U_PROPERTY_TYPE_MASK;
+
+    context->pattern = pattern;
+    return (repan_node*)property_node;
+}

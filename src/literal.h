@@ -292,27 +292,34 @@ typedef struct {
 #include "unicode_gen_inl.h"
 
 /* Property description: 8 bit: type, 6 bit: cathegory type, 6 bit: cathegory length */
-#define REPAN_U_PROPERTY 0x100000
-#define REPAN_U_CATHEGORY 0x200000
-#define REPAN_U_SCRIPT 0x400000
+#define REPAN_U_IS_CATHEGORY 0x80000000u
+#define REPAN_U_IS_SPECIAL_PROPERTY 0x40000000u
+#define REPAN_U_IS_SCRIPT 0x20000000u
 
-#define REPAN_U_PROPERTY_TYPE_MASK 0xff
-#define REPAN_U_GET_PROPERTY(data) ((data >> 8) & 0xfff)
+#define REPAN_U_DEFINE_CATHEGORY REPAN_U_IS_CATHEGORY
+#define REPAN_U_DEFINE_SCRIPT (REPAN_U_IS_SPECIAL_PROPERTY | REPAN_U_IS_SCRIPT)
 
-#define REPAN_US_UNKNOWN 0xff
+#define REPAN_U_PROPERTY_TYPE_MASK 0x3ff
+#define REPAN_U_PROPERTY_TYPE_SHIFT 10
+#define REPAN_U_GET_PROPERTY(data) ((data >> REPAN_U_PROPERTY_TYPE_SHIFT) & 0x3fff)
 
 enum {
-#define REPAN_UNICODE_PROPERT_TYPE(name, type, data) type,
+#define REPAN_UNICODE_PROPERT_TYPE(name, real_name, type, data) type,
 REPAN_U_PROPERTIES(REPAN_UNICODE_PROPERT_TYPE)
 #undef REPAN_UNICODE_PROPERT_TYPE
-REPAN_NEG_U_PROPERTY_CLASS
 };
 
 /* Defined in unicode_gen.c source file. */
 const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr);
 
 extern const repan_string_list_item REPAN_PRIV(u_properties)[];
-uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length);
+uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length, int get_index);
+
+typedef struct {
+    const char *string;
+} repan_u_property_name_item;
+
+extern const repan_u_property_name_item REPAN_PRIV(u_property_names)[];
 
 /* The case_folding_offset member of repan_u_codepoint contains
    information about case folding.

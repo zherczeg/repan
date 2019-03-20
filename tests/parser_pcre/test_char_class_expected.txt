@@ -127,7 +127,7 @@
 
 /[1\p2]/
     print
-    Pattern parse failed: A valid property letter or property name in {...} required after \p or \P
+    Pattern parse failed: A valid unicode property required after \p or \P
         /[1[ HERE ]>>\p2]/
 
 # Posix character classes

@@ -18,13 +18,71 @@
 
 /\p#/u
     print
-    Pattern parse failed: A valid property letter or property name in {...} required after \p or \P
+    Pattern parse failed: A valid unicode property required after \p or \P
         /[ HERE ]>>\p#/
 
-/\p{Unk!nown}/u
+/\p{Bam!um}/u
+    print
+    Pattern parse failed: A valid unicode property required after \p or \P
+        /[ HERE ]>>\p{Bam!um}/
+
+/\P{Bamum/u
     print
     Pattern parse failed: A right brace (}) is expected
-        /\p{Unk[ HERE ]>>!nown}/
+        /\P{Bamum[ HERE ]>>/
+
+/\P{sc=Ol_Chiki}\p{Script=o_lchIK_I}/u
+    print
+    /\P{Ol_Chiki}\p{Ol_Chiki}/
+
+/\p{  -S-  _C_  =  -c-  _o_  -P-  _t_  -i-  _C_  }/u
+    print
+    /\p{Coptic}/
+
+/\P{ Script Extensions = caNs }\p{SCx= AR_mi}/u
+    print
+    /\P{Script_Extensions=Canadian_Aboriginal}\p{Script_Extensions=Imperial_Aramaic}/
+
+/\p{ G-c =  l & }\P{ geneRAl_cate_gor-y = C }/u
+    print
+    /\p{L&}\P{C}/
+
+/\p{ Script = So }/u
+    print
+    Pattern parse failed: Unicode script name expected
+        /\p{ Script =[ HERE ]>> So }/
+
+/\p{ Script_Extensions = Pi }/u
+    print
+    Pattern parse failed: Unicode script name expected
+        /\p{ Script_Extensions =[ HERE ]>> Pi }/
+
+/\p{ General_Category = BOPO }/u
+    print
+    Pattern parse failed: Unicode cathegory expected
+        /\p{ General_Category =[ HERE ]>> BOPO }/
+
+/\p{ gc = gc = S }/u
+    print
+    Pattern parse failed: A valid unicode property required after \p or \P
+        /[ HERE ]>>\p{ gc = gc = S }/
+
+/\p{ gc = a! }/u
+    print
+    Pattern parse failed: A valid unicode property required after \p or \P
+        /[ HERE ]>>\p{ gc = a! }/
+
+/\p{Control}\P{c-o-nt_r_oL}\p{c_nTr-l}/u
+    print
+    /\p{Cc}\P{Cc}\p{Cc}/
+
+/\p{lC}\P{_L_c_}\p{Cased_Letter}\P{ca_sEDLetTe-r}/u
+    print
+    /\p{L&}\P{L&}\p{L&}\P{L&}/
+
+/\p{punctU ation}\P{pu-n-ct}\p{Final_Punctuation}\P{daShpunc Tuation}/u
+    print
+    /\p{P}\P{P}\p{Pf}\P{Pd}/
 
 # Unicode name support
 
@@ -43,6 +101,10 @@
 /\N{A- B -A  Cu-S}\N{Z-o M--b  I  - -e}/u
     ascii, print
     /\x{1f9ee}\x{1f9df}/
+
+/\N{FormFeed}\N{-f-f-}\N{LatIncapITAL-LEt tERGH A}/u
+    ascii, print
+    /\f\f\x{1a2}/
 
 /\N{ZOMBIEE}/u
     print
