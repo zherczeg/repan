@@ -36,7 +36,7 @@
 
 # Test PCRE initial options
 
-/(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/
+/(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/u
     print
     /(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/
 
@@ -63,6 +63,26 @@
     print
     Pattern parse failed: A decimal unsigned integer is required
         /(*LIMIT_MATCH=[ HERE ]>>)/
+
+/(*UCP)/
+    print
+    Pattern parse failed: UTF support needs to be enabled for this pattern
+        /[ HERE ]>>(*UCP)/
+
+/(*UTF)/
+    print
+    Pattern parse failed: UTF support needs to be enabled for this pattern
+        /[ HERE ]>>(*UTF)/
+
+/\p{C}/
+    print
+    Pattern parse failed: UTF support needs to be enabled for this pattern
+        /[ HERE ]>>\p{C}/
+
+/\N{STRING TERMINATOR}/
+    print
+    Pattern parse failed: UTF support needs to be enabled for this pattern
+        /[ HERE ]>>\N{STRING TERMINATOR}/
 
 # Test script run
 

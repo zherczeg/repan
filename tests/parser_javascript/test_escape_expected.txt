@@ -49,72 +49,77 @@
 
 # Unicode property support
 
-/\pL\p{L}\P{Cc}\p{SignWriting}/J
+/\pL\p{L}\P{Cc}\p{SignWriting}/Ju
     print
     /pL\p{L}\P{Cc}\p{SignWriting}/
 
-/\pA/J
+/\pA/Ju
     print
     /pA/
 
-/\p{Unknown}/J
+/\p{L}/J
+    print
+    Pattern parse failed: UTF support needs to be enabled for this pattern
+        /[ HERE ]>>\p{L}/
+
+/\p{Unknown}/Ju
     print
     Pattern parse failed: Unknown \p or \P property
         /[ HERE ]>>\p{Unknown}/
 
-/\p{Chak!ma}/J
+/\p{Chak!ma}/Ju
     print
     Pattern parse failed: A valid unicode property required after \p or \P
         /[ HERE ]>>\p{Chak!ma}/
 
-/\p{Chakma/J
+/\p{Chakma/Ju
     print
     Pattern parse failed: A right brace (}) is expected
         /\p{Chakma[ HERE ]>>/
 
-/\p{Ahom}\P{Cher}\p{Plrd}\P{Miao}/J
+/\p{Ahom}\P{Cher}\p{Plrd}\P{Miao}/Ju
     print
     /\p{Ahom}\P{Cherokee}\p{Miao}\P{Miao}/
 
-/\p{AHom}/J
+/\p{AHom}/Ju
     print
     Pattern parse failed: Unknown \p or \P property
         /[ HERE ]>>\p{AHom}/
 
-/\p{ Cher}/J
+/\p{ Cher}/Ju
     print
     Pattern parse failed: Unknown \p or \P property
         /[ HERE ]>>\p{ Cher}/
 
-/\p{sc=Egyp}\P{Script=Hira}\p{scx=Linear_B}\P{Script_Extensions=Multani}/J
+/\p{sc=Egyp}\P{Script=Hira}\p{scx=Linear_B}\P{Script_Extensions=Multani}/Ju
     print
     /\p{Egyptian_Hieroglyphs}\P{Hiragana}\p{Script_Extensions=Linear_B}\P{Script_Extensions=Multani}/
 
-/\p{gc=Ps}\P{General_Category=Po}/J
+/\p{gc=Ps}\P{General_Category=Po}/Ju
     print
     /\p{Ps}\P{Po}/
 
-/\p{sc=Ps}/J
+/\p{sc=Ps}/Ju
     print
     Pattern parse failed: Unicode script name expected
         /\p{sc=[ HERE ]>>Ps}/
 
-/\p{General_Category=Linear_A}/J
+/\p{General_Category=Linear_A}/Ju
     print
     Pattern parse failed: Unicode cathegory expected
         /\p{General_Category=[ HERE ]>>Linear_A}/
 
-/\p{scx}/J
+/\p{scx}/Ju
     print
     Pattern parse failed: Unknown \p or \P property
         /[ HERE ]>>\p{scx}/
 
-/\p{gc= Ps}/J
+/\p{gc= Ps}/Ju
     print
     Pattern parse failed: Unknown \p or \P property
         /\p{gc=[ HERE ]>> Ps}/
 
-/\P{General_Category=Po }/J
+/\P{General_Category=Po }/Ju
     print
     Pattern parse failed: Unknown \p or \P property
         /\P{General_Category=[ HERE ]>>Po }/

@@ -1,0 +1,34 @@
+# Test callout blocks
+
+/.(?C).(?C0).(?C5).(?C255)./u
+    print
+    /.(?C0).(?C0).(?C5).(?C255)./
+
+/(?C256)/u
+    print
+    Pattern parse failed: Callout number must be between 0 and 255
+        /[ HERE ]>>(?C256)/
+
+/(?C-1)/u
+    print
+    Pattern parse failed: Invalid (?C...) callout block
+        /[ HERE ]>>(?C-1)/
+
+/(?C4/u
+    print
+    Pattern parse failed: A right bracket is expected
+        /(?C4[ HERE ]>>/
+
+/.(?C`ab``cd`).(?C``).(?C'''').(?C"").(?C^^).(?C%%).(?C##).(?C$$).(?C{a}}b})./u
+    print
+    /.(?C`ab``cd`).(?C``).(?C'''').(?C"").(?C^^).(?C%%).(?C##).(?C$$).(?C{a}}b})./
+
+/(?C"a"/u
+    print
+    Pattern parse failed: A right bracket is expected
+        /(?C"a"[ HERE ]>>/
+
+/(?C"a""/u
+    print
+    Pattern parse failed: Invalid (?C...) callout block
+        /[ HERE ]>>(?C"a""/

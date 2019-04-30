@@ -23,7 +23,8 @@ TOOLS_SRCDIR = src-tools
 OBJS = $(addprefix $(OUTDIR)/, alloc.o literal.o nodes.o opt_flatten.o \
 			opt_merge_alternatives.o opt_uncapture.o parser_decode.o parser_glob.o \
 			parser_javascript.o parser_pcre.o parser_posix.o parser_util.o \
-			to_string_pcre.o to_string_encode.o unicode_gen.o util.o)
+			to_string_pcre.o to_string_encode.o unicode_expand.o unicode_gen.o \
+			util.o)
 TEST_OBJS = $(addprefix $(OUTDIR)/, repan-test.o)
 GEN_CTABLE_OBJS = $(addprefix $(OUTDIR)/, repan-gen-ctable.o)
 

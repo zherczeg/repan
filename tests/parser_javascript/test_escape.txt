@@ -35,47 +35,50 @@
 
 # Unicode property support
 
-/\pL\p{L}\P{Cc}\p{SignWriting}/J
+/\pL\p{L}\P{Cc}\p{SignWriting}/Ju
     print
 
-/\pA/J
+/\pA/Ju
     print
 
-/\p{Unknown}/J
+/\p{L}/J
     print
 
-/\p{Chak!ma}/J
+/\p{Unknown}/Ju
     print
 
-/\p{Chakma/J
+/\p{Chak!ma}/Ju
     print
 
-/\p{Ahom}\P{Cher}\p{Plrd}\P{Miao}/J
+/\p{Chakma/Ju
     print
 
-/\p{AHom}/J
+/\p{Ahom}\P{Cher}\p{Plrd}\P{Miao}/Ju
     print
 
-/\p{ Cher}/J
+/\p{AHom}/Ju
     print
 
-/\p{sc=Egyp}\P{Script=Hira}\p{scx=Linear_B}\P{Script_Extensions=Multani}/J
+/\p{ Cher}/Ju
     print
 
-/\p{gc=Ps}\P{General_Category=Po}/J
+/\p{sc=Egyp}\P{Script=Hira}\p{scx=Linear_B}\P{Script_Extensions=Multani}/Ju
     print
 
-/\p{sc=Ps}/J
+/\p{gc=Ps}\P{General_Category=Po}/Ju
     print
 
-/\p{General_Category=Linear_A}/J
+/\p{sc=Ps}/Ju
     print
 
-/\p{scx}/J
+/\p{General_Category=Linear_A}/Ju
     print
 
-/\p{gc= Ps}/J
+/\p{scx}/Ju
     print
 
-/\P{General_Category=Po }/J
+/\p{gc= Ps}/Ju
+    print
+
+/\P{General_Category=Po }/Ju
     print

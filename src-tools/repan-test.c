@@ -340,6 +340,13 @@ static int execute_commands(test_context *context, const char *data, const char 
                 return 0;
             }
         }
+        else if (length == 6 && memcmp(command_start, "expand", 6) == 0) {
+            uint32_t error = repan_expand(context->pattern, REPAN_UNICODE_EXPAND_ALL);
+            if (error != REPAN_SUCCESS) {
+                printf("Merge prefix error: %s\n", repan_get_error_message(error));
+                return 0;
+            }
+        }
         else {
             printf("\nError: Unknown command \"");
             print_str(command_start, data);

@@ -64,7 +64,7 @@
 /\N{hanGU LJUNGSE  ONG--OE}\N{H-A N G-U L J U N-G S E O N G O-  E}/u
     ascii, print
 
-/\N{LAT-I  N SmALl -  - LETTER--N}\N{VARIATION SELECTOR 256}/
+/\N{LAT-I  N SmALl -  - LETTER--N}\N{VARIATION SELECTOR 256}/u
     ascii, print
 
 /\N{A- B -A  Cu-S}\N{Z-o M--b  I  - -e}/u

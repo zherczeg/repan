@@ -94,7 +94,7 @@
     ascii, print
     /\x{116c}\x{1180}/
 
-/\N{LAT-I  N SmALl -  - LETTER--N}\N{VARIATION SELECTOR 256}/
+/\N{LAT-I  N SmALl -  - LETTER--N}\N{VARIATION SELECTOR 256}/u
     ascii, print
     /n\x{e01ef}/
 

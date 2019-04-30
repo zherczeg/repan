@@ -610,6 +610,27 @@ static void to_string_bracket(repan_to_string_context *context)
                 escape_char = REPAN_CHAR_K;
                 break;
 
+            case REPAN_CALLOUT_NODE:
+                context->write(context, REPAN_CHAR_LEFT_BRACKET);
+                context->write(context, REPAN_CHAR_QUESTION_MARK);
+                context->write(context, REPAN_CHAR_C);
+
+                if (node->sub_type == REPAN_CALLOUT_NUMBER) {
+                    to_string_decimal(context, ((repan_callout_node*)node)->callout_number);
+                }
+                else {
+                    uint32_t *src = (uint32_t*)((repan_callout_node*)node + 1);
+                    uint32_t length = *src++;
+
+                    while (length > 0) {
+                        context->write(context, *src++);
+                        length--;
+                    }
+                }
+
+                context->write(context, REPAN_CHAR_RIGHT_BRACKET);
+                break;
+
             default:
                 REPAN_ASSERT(0);
                 break;

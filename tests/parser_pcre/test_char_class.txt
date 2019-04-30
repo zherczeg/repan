@@ -81,10 +81,10 @@
 
 # Unicode property support
 
-/[1\pL2\p{Cc}3]/
+/[1\pL2\p{Cc}3]/u
     print
 
-/[1\p2]/
+/[1\p2]/u
     print
 
 # Posix character classes

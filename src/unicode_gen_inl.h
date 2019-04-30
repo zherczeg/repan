@@ -26,6 +26,11 @@
 
 /* WARNING: This file was automatically generated, do not edit! */
 
+typedef struct {
+    const uint16_t *stage3;
+    uint32_t chr;
+} repan_u_codepoint_iterator;
+
 enum {
     REPAN_UC_Lu,
     REPAN_UC_Ll,

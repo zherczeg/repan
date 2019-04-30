@@ -41,11 +41,11 @@
 
 # Unicode property support
 
-/[1\pL2\p{Cc}3]/J
+/[1\pL2\p{Cc}3]/Ju
     print
     /[1pL2\p{Cc}3]/
 
-/[\pX\p{Unknown}]/J
+/[\pX\p{Unknown}]/Ju
     print
     Pattern parse failed: Unknown \p or \P property
         /[\pX[ HERE ]>>\p{Unknown}]/

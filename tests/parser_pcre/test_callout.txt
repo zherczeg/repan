@@ -1,0 +1,22 @@
+# Test callout blocks
+
+/.(?C).(?C0).(?C5).(?C255)./u
+    print
+
+/(?C256)/u
+    print
+
+/(?C-1)/u
+    print
+
+/(?C4/u
+    print
+
+/.(?C`ab``cd`).(?C``).(?C'''').(?C"").(?C^^).(?C%%).(?C##).(?C$$).(?C{a}}b})./u
+    print
+
+/(?C"a"/u
+    print
+
+/(?C"a""/u
+    print

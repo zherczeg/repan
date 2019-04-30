@@ -55,11 +55,13 @@
 #define REPAN_CHAR_LESS_THAN_SIGN '<'
 #define REPAN_CHAR_GREATER_THAN_SIGN '>'
 #define REPAN_CHAR_APOSTROPHE '\''
+#define REPAN_CHAR_QUOTATION_MARK '"'
 
 #define REPAN_CHAR_UNDERSCORE '_'
-
 #define REPAN_CHAR_HASHMARK '#'
 #define REPAN_CHAR_SPACE ' '
+#define REPAN_CHAR_GRAVE_ACCENT '`'
+#define REPAN_CHAR_PERCENT_SIGN '%'
 
 #define REPAN_ESC_a 0x07
 #define REPAN_ESC_b 0x08
@@ -301,7 +303,9 @@ typedef struct {
 
 #define REPAN_U_PROPERTY_TYPE_MASK 0x3ff
 #define REPAN_U_PROPERTY_TYPE_SHIFT 10
-#define REPAN_U_GET_PROPERTY(data) ((data >> REPAN_U_PROPERTY_TYPE_SHIFT) & 0x3fff)
+#define REPAN_U_GET_PROPERTY(data) (((data) >> REPAN_U_PROPERTY_TYPE_SHIFT) & 0x3fff)
+#define REPAN_U_GET_PROPERTY_PTR(property) \
+    REPAN_PRIV(u_property_list) + (REPAN_U_GET_PROPERTY(REPAN_PRIV(u_properties)[property].data))
 
 enum {
 #define REPAN_UNICODE_PROPERT_TYPE(name, real_name, type, data) type,
@@ -311,6 +315,8 @@ REPAN_U_PROPERTIES(REPAN_UNICODE_PROPERT_TYPE)
 
 /* Defined in unicode_gen.c source file. */
 const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr);
+void REPAN_PRIV(u_codepoint_iterator_init)(uint32_t chr, repan_u_codepoint_iterator *iterator);
+const repan_u_codepoint *REPAN_PRIV(u_codepoint_iterator_next)(repan_u_codepoint_iterator *iterator);
 
 extern const repan_string_list_item REPAN_PRIV(u_properties)[];
 uint32_t REPAN_PRIV(find_u_property)(uint32_t *name, size_t length, int get_index);

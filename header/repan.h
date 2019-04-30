@@ -43,6 +43,7 @@ typedef struct repan_to_string_extra_opts_struct repan_to_string_extra_opts;
 enum {
     REPAN_SUCCESS = 0,
     REPAN_ERR_NO_MEMORY,
+    REPAN_ERR_UTF_REQUIRED,
     REPAN_ERR_DAMAGED_PATTERN,
     REPAN_ERR_CAPTURE_LIMIT,
     REPAN_ERR_LENGTH_LIMIT,
@@ -92,6 +93,8 @@ enum {
     REPAN_ERR_UNTERMINATED_COMMENT,
     REPAN_ERR_UNICODE_SCRIPT_EXPECTED,
     REPAN_ERR_UNICODE_CATHEGORY_EXPECTED,
+    REPAN_ERR_PCRE_INVALID_CALLOUT,
+    REPAN_ERR_PCRE_INVALID_CALLOUT_NUMBER,
     REPAN_ERR_POSIX_INVALID_QUANTIFIER,
     REPAN_ERR_GLOB_INVALID_ASTERISK,
 };
@@ -156,6 +159,11 @@ uint32_t repan_opt_flatten(repan_pattern *pattern, uint32_t options);
 uint32_t repan_opt_merge_alternatives(repan_pattern *pattern, uint32_t options);
 
 /* Other functions. */
+
+#define REPAN_UNICODE_EXPAND_SCRIPT_EXT 0x1
+#define REPAN_UNICODE_EXPAND_ALL 0x1
+
+uint32_t repan_expand(repan_pattern *pattern, uint32_t options);
 
 void repan_pattern_free(repan_pattern *pattern);
 const char *repan_get_error_message(uint32_t error);

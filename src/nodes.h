@@ -66,6 +66,7 @@ enum {
     REPAN_VERB_NODE,
     REPAN_VERB_WITH_ARGUMENT_NODE,
     REPAN_SET_MATCH_START_NODE,
+    REPAN_CALLOUT_NODE,
 
     REPAN_LAST_NODE_INDEX
 };
@@ -102,13 +103,18 @@ enum {
 };
 
 enum {
+    REPAN_U_NEGATED_PROPERTY = (1 << 0),
+    REPAN_U_SCRIPT_EXTENSION = (2 << 0),
+};
+
+enum {
     REPAN_NORMAL_CLASS,
     REPAN_NEGATED_CLASS,
 };
 
 enum {
-    REPAN_U_NEGATED_PROPERTY = (1 << 0),
-    REPAN_U_SCRIPT_EXTENSION = (2 << 0),
+    REPAN_CALLOUT_NUMBER,
+    REPAN_CALLOUT_STRING,
 };
 
 #define REPAN_NODE_HEADER \
@@ -189,8 +195,8 @@ typedef struct {
 
 typedef struct {
     REPAN_NODE_HEADER;
-    uint16_t modifiers;
-} repan_modifiers_node;
+    uint16_t callout_number;
+} repan_callout_node;
 
 typedef struct {
     void *next;

@@ -110,6 +110,110 @@ enum {
     REPAN_MODIFIER_MODE_RESET,
 };
 
+static void parse_callout(repan_parser_context *context, repan_parser_locals *locals)
+{
+    int callout_number = 0;
+    size_t callout_size = sizeof(repan_callout_node);
+    uint32_t *pattern = context->pattern;
+    uint32_t *dst, *src = NULL;
+    repan_callout_node *callout_node;
+
+    REPAN_ASSERT(pattern[-2] == REPAN_CHAR_QUESTION_MARK && pattern[-1] == REPAN_CHAR_C);
+
+    if (REPAN_IS_DECIMAL_DIGIT(*pattern)) {
+        callout_number = REPAN_PRIV(parse_decimal)(&pattern);
+
+        REPAN_ASSERT(REPAN_DECIMAL_INF > 255);
+        if (callout_number > 255) {
+            context->error = REPAN_ERR_PCRE_INVALID_CALLOUT_NUMBER;
+            context->pattern -= 3;
+            return;
+        }
+    }
+    else if (*pattern != REPAN_CHAR_RIGHT_BRACKET) {
+        uint32_t *pattern_end = context->pattern_end;
+        uint32_t last_char = *pattern;
+
+        src = pattern++;
+
+        switch (last_char) {
+        case REPAN_CHAR_GRAVE_ACCENT:
+        case REPAN_CHAR_APOSTROPHE:
+        case REPAN_CHAR_QUOTATION_MARK:
+        case REPAN_CHAR_CIRCUMFLEX_ACCENT:
+        case REPAN_CHAR_PERCENT_SIGN:
+        case REPAN_CHAR_HASHMARK:
+        case REPAN_CHAR_DOLLAR:
+            break;
+        case REPAN_CHAR_LEFT_BRACE:
+            last_char = REPAN_CHAR_RIGHT_BRACE;
+            break;
+        default:
+            context->error = REPAN_ERR_PCRE_INVALID_CALLOUT;
+            context->pattern -= 3;
+            return;
+        }
+
+        while (REPAN_TRUE) {
+            if (pattern >= pattern_end) {
+                context->error = REPAN_ERR_PCRE_INVALID_CALLOUT;
+                context->pattern -= 3;
+                return;
+            }
+
+            if (pattern - src >= REPAN_RESOURCE_MAX) {
+                context->error = REPAN_ERR_LENGTH_LIMIT;
+                context->pattern -= 3;
+                return;
+            }
+
+            if (*pattern == last_char) {
+                pattern++;
+                if (*pattern != last_char) {
+                    break;
+                }
+            }
+            pattern++;
+        }
+
+        callout_size += (pattern - src) * sizeof(uint32_t) + sizeof(uint32_t);
+    }
+
+    if (*pattern != REPAN_CHAR_RIGHT_BRACKET) {
+        context->error = REPAN_ERR_RIGHT_BRACKET_EXPECTED;
+        context->pattern = pattern;
+        return;
+    }
+
+    context->pattern = pattern + 1;
+
+    callout_node = (repan_callout_node*)REPAN_PRIV(alloc)(context->result, callout_size);
+
+    if (callout_node == NULL) {
+        context->error = REPAN_ERR_NO_MEMORY;
+        return;
+    }
+
+    callout_node->next_node = NULL;
+    callout_node->type = REPAN_CALLOUT_NODE;
+
+    locals->prev_node = (repan_prev_node*)locals->last_node;
+    locals->last_node->next_node = (repan_node*)callout_node;
+    locals->last_node = (repan_node*)callout_node;
+
+    if (callout_size == sizeof(repan_callout_node)) {
+        callout_node->sub_type = REPAN_CALLOUT_NUMBER;
+        callout_node->callout_number = (uint16_t)callout_number;
+        return;
+    }
+
+    callout_node->sub_type = REPAN_CALLOUT_STRING;
+
+    dst = (uint32_t*)(callout_node + 1);
+    *dst++ = (uint32_t)(pattern - src);
+    memcpy(dst, src, (pattern - src) * sizeof(uint32_t));
+}
+
 static void parse_open_bracket(repan_parser_context *context, repan_parser_locals *locals)
 {
     uint32_t current_char = *context->pattern;
@@ -352,6 +456,11 @@ static void parse_open_bracket(repan_parser_context *context, repan_parser_local
         locals->bracket_size = (uint16_t)sizeof(repan_ext_bracket_node);
         locals->bracket_command = REPAN_BRACKET_CMD_COND_GENERIC;
         return;
+    case REPAN_CHAR_C:
+        locals->bracket_size = 0;
+        context->pattern = pattern;
+        parse_callout(context, locals);
+        return;
     case REPAN_CHAR_HASHMARK:
         pattern_end = context->pattern_end;
 
@@ -499,6 +608,17 @@ static void parse_config(repan_parser_context *context, repan_parser_locals *loc
 
         if (!(data & REPAN_KEYW_OPT_INIT)) {
             return;
+        }
+
+        switch (data & REPAN_KEYW_TYPE_MASK) {
+        case REPAN_KEYW_UCP:
+        case REPAN_KEYW_UTF:
+            if (!(context->options & REPAN_PARSE_UTF)) {
+                context->error = REPAN_ERR_UTF_REQUIRED;
+                context->pattern = keyword - 2;
+                return;
+            }
+            break;
         }
 
         number = 0;

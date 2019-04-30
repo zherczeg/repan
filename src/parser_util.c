@@ -233,6 +233,14 @@ uint32_t REPAN_PRIV(u_parse_name)(repan_parser_context *context)
     uint8_t *dst, *end;
     uint32_t current_char;
 
+    REPAN_ASSERT(pattern[-2] == REPAN_CHAR_N && pattern[-1] == REPAN_CHAR_LEFT_BRACE);
+
+    if (!(context->options & REPAN_PARSE_UTF)) {
+        context->error = REPAN_ERR_UTF_REQUIRED;
+        context->pattern = pattern - 3;
+        return 0;
+    }
+
     dst = name;
     end = name + REPAN_U_MAX_NAME_LENGTH - 1;
 
@@ -411,6 +419,12 @@ repan_node *REPAN_PRIV(u_parse_property)(repan_parser_context *context, int is_s
     int mode = REPAN_U_PARSE_PROPERTY_MODE_NOT_SET;
 
     REPAN_ASSERT(pattern[-1] == REPAN_CHAR_p || pattern[-1] == REPAN_CHAR_P);
+
+    if (!(context->options & REPAN_PARSE_UTF)) {
+        context->error = REPAN_ERR_UTF_REQUIRED;
+        context->pattern = pattern - 2;
+        return NULL;
+    }
 
     if (pattern[-1] == REPAN_CHAR_P) {
         sub_type = REPAN_U_NEGATED_PROPERTY;

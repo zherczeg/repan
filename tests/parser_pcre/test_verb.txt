@@ -23,7 +23,7 @@
 
 # Test PCRE initial options
 
-/(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/
+/(*UCP)(*ANY)(*NO_DOTSTAR_ANCHOR)abc/u
     print
 
 /(*F)(*UCP)/
@@ -39,6 +39,18 @@
     print
 
 /(*LIMIT_MATCH=)/
+    print
+
+/(*UCP)/
+    print
+
+/(*UTF)/
+    print
+
+/\p{C}/
+    print
+
+/\N{STRING TERMINATOR}/
     print
 
 # Test script run

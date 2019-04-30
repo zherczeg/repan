@@ -458,7 +458,7 @@ if general_cathegories[-1] != "Cn":
     raise Exception("Cn must be the last member of general cathegories.")
 add_derived_property("Assigned", general_cathegories[0:-1])
 add_derived_property("L&", ["Lu", "Ll", "Lt"])
-add_property("LC", "     func(\"%s\", \"LC\", REPAN_UN_L_AMPERSAND, REPAN_U_DEFINE(L_AMPERSAND))")
+add_property("LC", "     func(\"%s\", \"LC\", REPAN_UN_LC, REPAN_U_DEFINE(L_AMPERSAND))")
 
 def add_cathegories():
     last_cathegory = None
@@ -783,6 +783,11 @@ def license(f):
 with open("unicode_gen_inl.h", "w") as f:
     license(f)
 
+    f.write("typedef struct {\n")
+    f.write("    const uint16_t *stage3;\n")
+    f.write("    uint32_t chr;\n")
+    f.write("} repan_u_codepoint_iterator;\n\n")
+
     f.write("enum {")
     first = True
     for cathegory in general_cathegories:
@@ -1045,6 +1050,29 @@ with open("unicode_gen.c", "w") as f:
     f.write("{\n")
     f.write("    uint32_t offset = ((uint32_t)stage1_map[chr >> %d]) << %d;\n" % (stage3_shift + stage2_shift, stage2_shift))
     f.write("    offset = stage2_map[offset + ((chr >> %d) & 0x%x)] << %d;\n" % (stage3_shift, (1 << stage2_shift) - 1, stage3_shift))
-    f.write("    offset = stage3_map[offset + (chr & 0x%x)];\n" % ((1 << stage3_shift) - 1))
-    f.write("    return codepoints + offset;\n")
+    f.write("    return codepoints + stage3_map[offset + (chr & 0x%x)];\n" % ((1 << stage3_shift) - 1))
+    f.write("}\n\n")
+
+    f.write("void REPAN_PRIV(u_codepoint_iterator_init)(uint32_t chr, repan_u_codepoint_iterator *iterator)\n")
+    f.write("{\n")
+    f.write("    uint32_t offset = ((uint32_t)stage1_map[chr >> %d]) << %d;\n" % (stage3_shift + stage2_shift, stage2_shift))
+    f.write("    iterator->chr = chr;\n")
+    f.write("    offset = stage2_map[offset + ((chr >> %d) & 0x%x)] << %d;\n" % (stage3_shift, (1 << stage2_shift) - 1, stage3_shift))
+    f.write("    iterator->stage3 = stage3_map + (offset + (chr & 0x%x));\n" % ((1 << stage3_shift) - 1))
+    f.write("}\n\n")
+
+    f.write("const repan_u_codepoint *REPAN_PRIV(u_codepoint_iterator_next)(repan_u_codepoint_iterator *iterator)\n")
+    f.write("{\n")
+    f.write("    uint32_t chr = ++iterator->chr;\n")
+    f.write("    const uint16_t *stage3 = iterator->stage3;\n")
+    f.write("    const repan_u_codepoint *result = codepoints + *stage3;\n\n")
+    f.write("    if ((chr & 0x%x) != 0) {\n" % ((1 << stage3_shift) - 1))
+    f.write("        iterator->stage3 = stage3 + 1;\n")
+    f.write("        return result;\n")
+    f.write("    }\n\n")
+    f.write("    if (chr < 0x110000) {\n")
+    f.write("        uint32_t offset = ((uint32_t)stage1_map[chr >> %d]) << %d;\n" % (stage3_shift + stage2_shift, stage2_shift))
+    f.write("        iterator->stage3 = stage3_map + (stage2_map[offset + ((chr >> %d) & 0x%x)] << %d);\n" % (stage3_shift, (1 << stage2_shift) - 1, stage3_shift))
+    f.write("    }\n")
+    f.write("    return result;\n")
     f.write("}\n")

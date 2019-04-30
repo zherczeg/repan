@@ -121,11 +121,11 @@
 
 # Unicode property support
 
-/[1\pL2\p{Cc}3]/
+/[1\pL2\p{Cc}3]/u
     print
     /[1\p{L}2\p{Cc}3]/
 
-/[1\p2]/
+/[1\p2]/u
     print
     Pattern parse failed: A valid unicode property required after \p or \P
         /[1[ HERE ]>>\p2]/

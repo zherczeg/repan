@@ -33,6 +33,8 @@ const char *repan_get_error_message(uint32_t error)
         return "Operation is completed successfully";
     case REPAN_ERR_NO_MEMORY:
         return "Not enough memory";
+    case REPAN_ERR_UTF_REQUIRED:
+        return "UTF support needs to be enabled for this pattern";
     case REPAN_ERR_DAMAGED_PATTERN:
         return "The pattern is not usable after an unsuccessful operation and must be freed";
     case REPAN_ERR_CAPTURE_LIMIT:
@@ -131,6 +133,10 @@ const char *repan_get_error_message(uint32_t error)
         return "Unicode script name expected";
     case REPAN_ERR_UNICODE_CATHEGORY_EXPECTED:
         return "Unicode cathegory expected";
+    case REPAN_ERR_PCRE_INVALID_CALLOUT:
+        return "Invalid (?C...) callout block";
+    case REPAN_ERR_PCRE_INVALID_CALLOUT_NUMBER:
+        return "Callout number must be between 0 and 255";
     case REPAN_ERR_POSIX_INVALID_QUANTIFIER:
         return "Invalid {} repeat block";
     case REPAN_ERR_GLOB_INVALID_ASTERISK:

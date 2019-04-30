@@ -14347,6 +14347,31 @@ const repan_u_codepoint *REPAN_PRIV(u_get_codepoint)(uint32_t chr)
 {
     uint32_t offset = ((uint32_t)stage1_map[chr >> 9]) << 5;
     offset = stage2_map[offset + ((chr >> 4) & 0x1f)] << 4;
-    offset = stage3_map[offset + (chr & 0xf)];
-    return codepoints + offset;
+    return codepoints + stage3_map[offset + (chr & 0xf)];
+}
+
+void REPAN_PRIV(u_codepoint_iterator_init)(uint32_t chr, repan_u_codepoint_iterator *iterator)
+{
+    uint32_t offset = ((uint32_t)stage1_map[chr >> 9]) << 5;
+    iterator->chr = chr;
+    offset = stage2_map[offset + ((chr >> 4) & 0x1f)] << 4;
+    iterator->stage3 = stage3_map + (offset + (chr & 0xf));
+}
+
+const repan_u_codepoint *REPAN_PRIV(u_codepoint_iterator_next)(repan_u_codepoint_iterator *iterator)
+{
+    uint32_t chr = ++iterator->chr;
+    const uint16_t *stage3 = iterator->stage3;
+    const repan_u_codepoint *result = codepoints + *stage3;
+
+    if ((chr & 0xf) != 0) {
+        iterator->stage3 = stage3 + 1;
+        return result;
+    }
+
+    if (chr < 0x110000) {
+        uint32_t offset = ((uint32_t)stage1_map[chr >> 9]) << 5;
+        iterator->stage3 = stage3_map + (stage2_map[offset + ((chr >> 4) & 0x1f)] << 4);
+    }
+    return result;
 }
