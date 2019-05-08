@@ -24,46 +24,30 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef REPAN_INTERNAL_H
-#define REPAN_INTERNAL_H
+#ifndef REPAN_GEN_NODES_H
+#define REPAN_GEN_NODES_H
 
-#include <stdlib.h>
-#include <string.h>
+#define REPAN_GEN_STAR (1 << 8)
+#define REPAN_GEN_PLUS (2 << 8)
+#define REPAN_GEN_QUESTION_MARK (3 << 8)
 
-#ifdef DEBUG_REPAN
+#define REPAN_GET_CLASS_CHILDS(ptr) \
+    ((ptr) == NULL ? NULL : &((repan_char_class_node*)(ptr))->node_list)
+/* Useful if a single alternative is required. */
+#define REPAN_GET_BRACKET_CHILDS(ptr) \
+    ((ptr) == NULL ? NULL : (repan_prev_node*)(&((repan_bracket_node*)(ptr))->alt_node_list))
+#define REPAN_GET_ALTERNATIVES(ptr) \
+    ((ptr) == NULL ? NULL : &((repan_bracket_node*)(ptr))->alt_node_list)
 
-#include <stdio.h>
+repan_prev_node *REPAN_PRIV(gen_node)(repan_pattern *pattern,
+    repan_prev_node *prev_node, uint8_t type, uint8_t sub_type);
+repan_prev_node *REPAN_PRIV(gen_char)(repan_pattern *pattern,
+    repan_prev_node *prev_node, uint8_t caseless, uint32_t chr);
+repan_prev_node *REPAN_PRIV(gen_class)(repan_pattern *pattern,
+    repan_prev_node *prev_node, uint8_t sub_type, uint8_t caseless);
+repan_prev_node *REPAN_PRIV(gen_bracket)(repan_pattern *pattern,
+    repan_prev_node *prev_node, uint8_t sub_type, uint32_t repeat);
+repan_alt_node *REPAN_PRIV(gen_alternative)(repan_pattern *pattern,
+    repan_alt_node *prev_alt_node);
 
-#define REPAN_ASSERT(x) \
-    if (!(x)) { \
-        printf("ASSERTION FAILURE in %s:%d\n", __FILE__, __LINE__); \
-        abort(); \
-    }
-
-#else /* !DEBUG_REPAN */
-
-#define REPAN_ASSERT(x)
-
-#endif /* DEBUG_REPAN */
-
-/* True/false constants. */
-#define REPAN_TRUE 1
-#define REPAN_FALSE 0
-
-/* Private functions. */
-#define REPAN_PRIV(func_name)  repan__priv_ ## func_name
-
-/* Represents infinite repeats. */
-#define REPAN_DECIMAL_INF UINT32_MAX
-
-/* Maximum number of brackets, names, name lengths, etc.. */
-#define REPAN_RESOURCE_MAX 0xffffff
-
-/* These set up the core infrastructure. */
-#include "repan.h"
-#include "alloc.h"
-#include "literal.h"
-#include "nodes.h"
-#include "gen_nodes.h"
-
-#endif /* REPAN_INTERNAL_H */
+#endif /* REPAN_GEN_NODES_H */
