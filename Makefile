@@ -8,7 +8,7 @@ endif
 endif
 AR = ar
 
-CFLAGS += -Wall -Iheader -std=c99
+CFLAGS += -Wall -Iinclude -std=c99
 
 OUTDIR = out
 
